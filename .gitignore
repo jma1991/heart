@@ -35,4 +35,4 @@ build-logs/
 !output/*/*.gz
 
 # Shiny
-shiny/*.Rds
+shiny/
