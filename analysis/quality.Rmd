@@ -1,0 +1,472 @@
+---
+title: "Quality Control"
+author: "James Ashmore"
+date: "2019-08-14"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+In this document we are going to perform quality control on the cells.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/02-quality-control",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  devtools,
+  eulerr,
+  ggrepel,
+  here,
+  patchwork,
+  readr,
+  scales,
+  scater,
+  scran
+)
+```
+
+Read object from file:
+
+```{r}
+sce <- read_rds(here("data/import.Rds"))
+```
+
+## Exploration
+
+We begin by exploring the dataset which contains `r ncol(sce)` cells and `r nrow(sce)` genes.
+
+## Metrics
+
+Compute QC metrics for each cell:
+
+```{r}
+mit <- which(seqnames(sce) == "MT")
+gfp <- which(seqnames(sce) == "EGFP")
+sce <- calculateQCMetrics(sce, feature_controls = list(MT = mit, EGFP = gfp))
+```
+
+Inspect the distributions of QC metrics:
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotColData(sce, "log10_total_counts", "plate", colour_by = "genotype"),
+  plotColData(sce, "log10_total_features_by_counts", "plate", colour_by = "genotype"),
+  plotColData(sce, "pct_counts_ERCC", "plate", colour_by = "genotype"),
+  plotColData(sce, "pct_counts_MT", "plate", colour_by = "genotype")
+)
+```
+
+### Dimensionality reduction {.tabset}
+
+Calculate dimenionality reduction data:
+
+```{r}
+set.seed(1701)
+sizeFactors(sce) <- librarySizeFactors(sce)
+sce <- scater::normalize(sce)
+sce <- runPCA(sce)
+sce <- runTSNE(sce)
+sce <- runUMAP(sce)
+```
+
+Inspect dimensionality reduction plots:
+
+#### PCA
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "plate"),
+  plotPCA(sce, colour_by = "log10_total_counts"),
+  plotPCA(sce, colour_by = "log10_total_features_by_counts"),
+  plotPCA(sce, colour_by = "pct_counts_ERCC"),
+  plotPCA(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "plate"),
+  plotTSNE(sce, colour_by = "log10_total_counts"),
+  plotTSNE(sce, colour_by = "log10_total_features_by_counts"),
+  plotTSNE(sce, colour_by = "pct_counts_ERCC"),
+  plotTSNE(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "plate"),
+  plotUMAP(sce, colour_by = "log10_total_counts"),
+  plotUMAP(sce, colour_by = "log10_total_features_by_counts"),
+  plotUMAP(sce, colour_by = "pct_counts_ERCC"),
+  plotUMAP(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+## Cell Filtering
+
+We will now perform filtering to remove low-quality cells:
+
+### Manual threshold {.tabset}
+
+The first approach to identifying low-quality cells is to apply manual thresholds on the QC metrics:
+
+```{r}
+qc1 <- sce$total_counts < 10000
+qc2 <- sce$total_features_by_counts < 1000
+qc3 <- sce$pct_counts_ERCC > 5
+qc4 <- sce$pct_counts_MT > 5
+sce$manual <- !(qc1 | qc2 | qc3 | qc4)
+```
+
+Inspect distribution of QC metrics:
+
+```{r}
+patchwork::wrap_plots(
+    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "manual"),
+    ncol = 2
+)
+```
+
+Inspect dimensionality reduction plots:
+
+#### PCA
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "manual"),
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "log10_total_counts"),
+  plotPCA(sce, colour_by = "log10_total_features_by_counts"),
+  plotPCA(sce, colour_by = "pct_counts_ERCC"),
+  plotPCA(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "manual"),
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "log10_total_counts"),
+  plotTSNE(sce, colour_by = "log10_total_features_by_counts"),
+  plotTSNE(sce, colour_by = "pct_counts_ERCC"),
+  plotTSNE(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "manual"),
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "log10_total_counts"),
+  plotUMAP(sce, colour_by = "log10_total_features_by_counts"),
+  plotUMAP(sce, colour_by = "pct_counts_ERCC"),
+  plotUMAP(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+### Adaptive threshold {.tabset}
+
+The next approach is to identify cells that are outliers based on the median absolute deviation for the QC metrics:
+
+```{r}
+qc1 <- isOutlier(sce$log10_total_counts, nmads = 3, type = "lower")
+qc2 <- isOutlier(sce$log10_total_features_by_counts, nmads = 3, type = "lower")
+qc3 <- isOutlier(sce$pct_counts_ERCC, nmads = 3, type = "higher")
+qc4 <- isOutlier(sce$pct_counts_MT, nmads = 3, type = "higher")
+sce$adaptive <- !(qc1 | qc2 | qc3 | qc4)
+```
+
+Inspect distribution of QC metrics:
+
+```{r}
+patchwork::wrap_plots(
+    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "adaptive"),
+    ncol = 2
+)
+```
+
+Inspect dimensionality reduction plots:
+
+#### PCA
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "adaptive"),
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "log10_total_counts"),
+  plotPCA(sce, colour_by = "log10_total_features_by_counts"),
+  plotPCA(sce, colour_by = "pct_counts_ERCC"),
+  plotPCA(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "adaptive"),
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "log10_total_counts"),
+  plotTSNE(sce, colour_by = "log10_total_features_by_counts"),
+  plotTSNE(sce, colour_by = "pct_counts_ERCC"),
+  plotTSNE(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "adaptive"),
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "log10_total_counts"),
+  plotUMAP(sce, colour_by = "log10_total_features_by_counts"),
+  plotUMAP(sce, colour_by = "pct_counts_ERCC"),
+  plotUMAP(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+### Outlier threshold {.tabset}
+
+The last approach is to perform a PCA on the QC metrics for each cell:
+
+```{r}
+run <- runPCA(sce, use_coldata = TRUE, detect_outliers = TRUE)
+sce$outlier <- !run$outlier
+```
+
+Inspect distribution of QC metrics:
+
+```{r}
+patchwork::wrap_plots(
+    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "outlier"),
+    ncol = 2
+)
+```
+
+Inspect dimensionality reduction plots:
+
+#### PCA
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "outlier"),
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "log10_total_counts"),
+  plotPCA(sce, colour_by = "log10_total_features_by_counts"),
+  plotPCA(sce, colour_by = "pct_counts_ERCC"),
+  plotPCA(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "outlier"),
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "log10_total_counts"),
+  plotTSNE(sce, colour_by = "log10_total_features_by_counts"),
+  plotTSNE(sce, colour_by = "pct_counts_ERCC"),
+  plotTSNE(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 9, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "outlier"),
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "log10_total_counts"),
+  plotUMAP(sce, colour_by = "log10_total_features_by_counts"),
+  plotUMAP(sce, colour_by = "pct_counts_ERCC"),
+  plotUMAP(sce, colour_by = "pct_counts_MT"),
+  ncol = 2
+)
+```
+
+### Comparison
+
+Compare the number of cells selected between methods using an Euler diagram:
+
+```{r}
+mat <- cbind(All = TRUE, Manual = sce$manual, Adaptive = sce$adaptive, PCA = sce$outlier)
+fit <- euler(mat, shape = "circle")
+col <- RColorBrewer::brewer.pal(n = 4, name = "Pastel2")
+plot(fit, fill = col, quantities = TRUE)
+```
+
+### Selection
+
+We are going to use the manual filtering as it is easier to interpret and adjust:
+
+```{r}
+sce <- sce[, sce$adaptive]
+```
+
+## Cell cycle
+
+Classify cells into their cell cycle phase based on gene expression data:
+
+```{r}
+con <- system.file("exdata", "mouse_cycle_markers.rds", package = "scran")
+ext <- read_rds(con)
+res <- cyclone(sce, ext, gene.names = rowData(sce)$gene_id)
+colData(sce) <- cbind(colData(sce), phase = res$phases, res$normalized.scores)
+```
+
+Tabulate cell cycle phases:
+
+```{r}
+knitr::kable(table(sce$phase), col.names = c("Phase", "Frequency"))
+```
+
+Plot G2/M score against the G1 score for each cell:
+
+```{r}
+plotColData(sce, "G1", "G2M", colour_by = "phase")
+```
+
+## Gene filtering
+
+Compute QC metrics for each gene:
+
+```{r}
+qc <- perFeatureQCMetrics(sce)
+df <- as.data.frame(qc)
+```
+
+### Low abundance
+
+Plot the distribution of log-means across all genes:
+
+```{r}
+ggplot(df, aes(mean)) + 
+  geom_histogram(bins = 100, colour = "black", fill = "grey") + 
+  scale_x_log10(labels = comma) +
+  theme_bw()
+```
+
+Define low abundance genes using a log-means threshold:
+
+```{r}
+df$abundance <- df$mean > 1
+```
+
+Tabulate the number of low abundance genes:
+
+```{r}
+knitr::kable(table(df$abundance), col.names = c("Keep", "Frequency"))
+```
+
+### Low frequency
+
+Plot the percentange of expressing cells against the log-mean expression for each gene:
+
+```{r}
+ggplot(df, aes(mean, detected)) +
+  geom_point(alpha = 0.1, colour = "grey") +
+  geom_smooth(colour = "black", se = FALSE) +
+  scale_x_log10(labels = comma) +
+  theme_bw()
+```
+
+Define low frequency genes as having a minimum of 1 read in at least 1 percent of cells:
+
+```{r}
+df$frequency <- rowSums(counts(sce) >= 1) >= (ncol(sce) * 0.01)
+```
+
+Tabulate the number of low frequency genes:
+
+```{r}
+knitr::kable(table(df$frequency), col.names = c("Keep", "Frequency"))
+```
+
+### Comparison
+
+Compare the number of genes selected between methods using an Euler diagram:
+
+```{r}
+mat <- cbind(All = TRUE, Mean = df$abundance, Freq = df$frequency)
+fit <- euler(mat, shape = "circle")
+col <- RColorBrewer::brewer.pal(n = 3, name = "Pastel2")
+plot(fit, fill = col, quantities = TRUE)
+```
+
+### Filter
+
+We are going to use the frequency-based filter as it tends to be less aggressive:
+
+```{r}
+sce <- sce[df$frequency, ]
+```
+
+## Summary
+
+After quality control we have a dataset with `r ncol(sce)` cells and `r nrow(sce)` genes.
+
+### Output
+
+```{r}
+write_rds(sce, here("data/quality.Rds"))
+```
+
+### Session
+
+Print version information:
+
+```{r session}
+session_info()
+```

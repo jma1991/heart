@@ -1,0 +1,253 @@
+---
+title: "Dimensionality reduction"
+author: "James Ashmore"
+date: "2019-08-23"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Motivation
+
+In this document we aim to reduce the number of separate dimensions in the data by performing dimenstionality reduction.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/dimension",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  here,
+  patchwork,
+  readr,
+  scater,
+  scran
+)
+```
+
+Read experiment data:
+
+```{r}
+sce <- readr::read_rds(here::here("data/integration.Rds"))
+```
+
+## PCA
+
+### Calculate PCA
+
+Perform a principal components analysis (PCA) on the expression data:
+
+```{r}
+set.seed(1701)
+
+sel <- rowData(sce)$selected
+
+sce <- runPCA(sce, subset_row = sel)
+```
+
+### Find elbow
+
+Find the elbow point in the percentage of variance explained by successive PCs:
+
+```{r}
+dim <- reducedDim(sce, 'PCA')
+
+var <- attr(dim, 'percentVar')
+
+num <- PCAtools::findElbowPoint(var)
+```
+
+Plot the percentage of variance explained by successive PCs:
+
+```{r}
+dat <- data.frame(index = seq_along(var), total = var)
+
+ggplot(dat, aes(index, total)) +
+  geom_point() +
+  geom_vline(xintercept = num, colour = 'red') +
+  labs(x = 'PC', y = 'Variance (%)') +
+  theme_minimal()
+```
+
+### Technical
+
+Retain all PCs until the percentage of total variation explained reaches a given threshold based on the technical noise:
+
+```{r}
+set.seed(1701)
+
+var <- attr(dim, 'percentVar')
+
+mod <- modelGeneVarWithSpikes(sce, 'ERCC')
+
+sel <- rowData(sce)$selected
+
+dim <- getDenoisedPCs(sce, technical = mod, subset.row = sel)
+
+num <- ncol(dim$components)
+```
+
+Plot the cumulative percentage of variance explained by successive PCs:
+
+```{r}
+dat <- data.frame(index = seq_along(var), total = cumsum(var))
+
+ggplot(dat, aes(index, total)) +
+  geom_point() +
+  geom_vline(xintercept = num, colour = 'red') +
+  labs(x = 'PC', y = 'Cumulative variance (%)') +
+  theme_minimal()
+```
+
+### Structure
+
+Find the number of subpopulations in the data using clustering:
+
+```{r}
+dim <- reducedDim(sce, 'PCA')
+
+len <- seq_len(ncol(dim))
+
+res <- sapply(len, function(x) {
+
+  mat <- dim[, seq_len(x), drop = FALSE]
+
+  snn <- buildSNNGraph(mat, transposed = TRUE)
+
+  cls <- igraph::cluster_walktrap(snn)$membership
+
+  val <- length(unique(cls))
+
+})
+
+num <- len[which.min(abs(res - 1 - len))]
+```
+
+Plot the percentage of variance explained by successive PCs:
+
+```{r}
+dat <- data.frame(index = len, total = res)
+
+ggplot(dat, aes(index, total)) +
+  geom_point() +
+  geom_vline(xintercept = num, colour = 'red') +
+  labs(x = 'PC', y = 'Number of clusters') +
+  theme_minimal()
+```
+
+### Selection
+
+Choose number of PCs to retain from the above analyses:
+
+```{r}
+num <- 4
+
+len <- seq_len(num)
+
+dim <- reducedDim(sce, 'PCA')
+
+reducedDim(sce, 'PCA') <- dim[, len]
+```
+
+Plot retained PCs:
+
+```{r, fig.height = 8, fig.width = 10}
+#Hello!
+plotPCA(sce, colour_by = "genotype", ncomponents = num)
+```
+
+<!-- ## TSNE -->
+
+<!-- ### Calculate TSNE -->
+
+<!-- Perform t-stochastic neighbour embedding (t-SNE) on the PCA data: -->
+
+<!-- ```{r, fig.height = 8, fig.width = 10} -->
+<!-- num <- seq(5, 50, length.out = 16) -->
+
+<!-- plt <- lapply(num, function(x) { -->
+
+<!--   set.seed(1701) -->
+
+<!--   run <- runTSNE(sce, dimred = 'PCA', perplexity = x) -->
+
+<!--   txt <- paste('Perplexity:', x) -->
+
+<!--   plotTSNE(run, colour_by = 'genotype') + ggtitle(txt) -->
+
+<!-- }) -->
+
+<!-- wrap_plots(plt, ncol = 4) -->
+<!-- ``` -->
+
+<!-- Select perplexity value to balance attention between local and global aspects of the data: -->
+
+<!-- ```{r} -->
+<!-- set.seed(1701) -->
+
+<!-- sce <- runTSNE(sce, dimred = 'PCA', perplexity = 35) -->
+<!-- ``` -->
+
+<!-- ## UMAP -->
+
+<!-- ### Calculate UMAP -->
+
+<!-- Perform uniform manifold approximation and projection (UMAP) on the PCA data: -->
+
+<!-- ```{r, fig.height = 8, fig.width = 10} -->
+<!-- num <- seq(5, 50, length.out = 16) -->
+
+<!-- plt <- lapply(num, function(x) { -->
+
+<!--   set.seed(1701) -->
+
+<!--   run <- runUMAP(sce, dimred = 'PCA', n_neighbors = x) -->
+
+<!--   txt <- paste('Neighbors:', x) -->
+
+<!--   plotUMAP(run, colour_by = 'genotype') + ggtitle(txt) -->
+
+<!-- }) -->
+
+<!-- wrap_plots(plt, ncol = 4) -->
+<!-- ``` -->
+
+<!-- Select number of nearest neighbors to identify when constructing the initial graph: -->
+
+<!-- ```{r} -->
+<!-- set.seed(1701) -->
+
+<!-- sce <- runUMAP(sce, dimred = 'PCA', n_neighbors = 47) -->
+<!-- ``` -->
+
+<!-- ## Summary -->
+
+<!-- ### Output -->
+
+<!-- Write experiment data: -->
+
+<!-- ```{r output} -->
+<!-- write_rds(sce, here("data/dimension.Rds")) -->
+<!-- ``` -->
+
+<!-- ### Session -->
+
+<!-- Print session information: -->
+
+<!-- ```{r session} -->
+<!-- devtools::session_info() -->
+<!-- ``` -->

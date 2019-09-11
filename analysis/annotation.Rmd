@@ -1,0 +1,134 @@
+---
+title: "Annotation"
+author: "James Ashmore"
+date: "2019-08-26"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Motivation
+
+In this analysis we are going to annotate previously defined clusters with a cell type label. This process can be done manually using a domain expert's knowledge or automatically based on reference data.
+
+## Setup
+
+Define chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/annotation",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Attach required packages:
+
+```{r pacman}
+pacman::p_load(
+  cellassign,
+  scater,
+  reticulate
+)
+```
+
+Import experiment data:
+
+```{r}
+sce <- readr::read_rds(here::here("data/markers.rds"))
+```
+
+## Annotation
+
+### Manual {.tabset}
+
+Manually annotate clusters with cell type labels:
+
+```{r, eval = FALSE}
+sce$manual_celltype <- "CellType"
+```
+
+#### PCA
+
+```{r, eval = FALSE}
+plotPCA(sce, colour_by = "manual_celltype")
+```
+
+#### t-SNE
+
+```{r, eval = FALSE}
+plotTSNE(sce, colour_by = "manual_celltype")
+```
+
+#### UMAP
+
+```{r, eval = FALSE}
+plotUMAP(sce, colour_by = "manual_celltype")
+```
+
+### Automatic {.tabset}
+
+Automatically annotate cells to known types based on the expression patterns of a priori known marker genes:
+
+```{r}
+
+ann <- readr::read_csv(here::here("docs/markers.csv"))
+
+rho <- reshape2::dcast(ann, gene ~ cell, length)
+
+rho <- tibble::column_to_rownames(rho, var = "gene")
+
+rho <- as.matrix(rho)
+
+sel <- intersect(rownames(rho), rownames(sce))
+
+set.seed(1701)
+
+py_set_seed(1701)
+
+fit <- cellassign(sce[sel, ], marker_gene_info = rho[sel, ], s = sizeFactors(sce))
+
+sce$cellassign_celltype <- fit$cell_type
+
+```
+
+#### PCA
+
+```{r}
+plotPCA(sce, colour_by = "cellassign_celltype")
+```
+
+#### t-SNE
+
+```{r}
+plotTSNE(sce, colour_by = "cellassign_celltype")
+```
+
+#### UMAP
+
+```{r}
+plotUMAP(sce, colour_by = "cellassign_celltype")
+```
+
+## Summary
+
+### Output
+
+Write experiment data:
+
+```{r}
+readr::write_rds(sce, here::here("data/annotation.Rds"))
+```
+
+### Session
+
+Print session information:
+
+```{r session}
+devtools::session_info()
+```

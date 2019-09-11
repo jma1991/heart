@@ -1,0 +1,22 @@
+---
+title: "Interactive"
+author: "James Ashmore"
+date: "2019-09-07"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+
+## Deployment
+
+Deploy the iSEE shiny application to the shinyapps.io by RStudio server:
+
+```{r}
+library(rsconnect)
+options(repos = BiocManager::repositories())
+rsconnect::deployApp("shiny", appName = "heart", appTitle = "Heart", account = "jashmore")
+```
+

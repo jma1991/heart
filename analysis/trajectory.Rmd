@@ -1,0 +1,207 @@
+---
+title: "Trajectory"
+author: "James Ashmore"
+date: "2019-08-23"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Motivation
+
+In this analysis we are going to infer trajectories between the clusters or cell types defined previously.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/trajectory",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  SingleCellExperiment,
+  slingshot
+)
+```
+
+Read experiment data:
+
+```{r}
+sce <- readr::read_rds(here::here("data/annotation.Rds"))
+```
+
+## Slingshot
+
+### Clusters
+
+Infer trajectory between all clusters using UMAP dimensions:
+
+```{r}
+sce <- slingshot(sce, clusterLabels = "cluster", start.clus = "3", end.clus = "4", reducedDim = "UMAP")
+```
+
+Extract slingshot results from experiment data:
+
+```{r}
+res <- SlingshotDataSet(sce)
+```
+
+Inspect UMAP plot coloured by pseudotime:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(11, "Spectral")
+
+col <- colorRampPalette(pal)(100)
+
+col <- col[cut(sce$slingPseudotime_1, breaks = 101)]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "curves")
+
+```
+
+Inspect UMAP plot coloured by clustering:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(9, name = "Set1")
+
+len <- length(unique(sce$cluster))
+
+pal <- pal[1:len]
+
+names(pal) <- unique(sce$cluster)
+
+col <- pal[match(sce$cluster, names(pal))]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "lineages")
+
+legend("topright", legend = unique(sce$cluster), col = pal, pch = 16)
+
+```
+
+Inspect UMAP plot coloured by genotype:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(9, name = "Set1")
+
+len <- length(unique(sce$genotype))
+
+pal <- pal[1:len]
+
+names(pal) <- unique(sce$genotype)
+
+col <- pal[match(sce$genotype, names(pal))]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "lineages")
+
+legend("topright", legend = unique(sce$genotype), col = pal, pch = 16)
+
+```
+
+### Cell types
+
+Infer trajectory between all cellassign_celltypes using UMAP dimensions:
+
+```{r}
+sce <- slingshot(sce, clusterLabels = "cellassign_celltype", start.clus = "LPM", end.clus = "EC", reducedDim = "UMAP")
+```
+
+Extract slingshot results from experiment data:
+
+```{r}
+res <- SlingshotDataSet(sce)
+```
+
+Inspect UMAP plot coloured by pseudotime:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(11, "Spectral")
+
+col <- colorRampPalette(pal)(100)
+
+col <- col[cut(sce$slingPseudotime_1, breaks = 101)]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "curves")
+
+```
+
+Inspect UMAP plot coloured by cell type:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(9, name = "Set1")
+
+len <- length(unique(sce$cellassign_celltype))
+
+pal <- pal[1:len]
+
+names(pal) <- unique(sce$cellassign_celltype)
+
+col <- pal[match(sce$cellassign_celltype, names(pal))]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "lineages")
+
+legend("topright", legend = unique(sce$cellassign_celltype), col = pal, pch = 16)
+
+```
+
+Inspect UMAP plot coloured by genotype:
+
+```{r}
+
+pal <- RColorBrewer::brewer.pal(9, name = "Set1")
+
+len <- length(unique(sce$genotype))
+
+pal <- pal[1:len]
+
+names(pal) <- unique(sce$genotype)
+
+col <- pal[match(sce$genotype, names(pal))]
+
+plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
+
+lines(res, type = "lineages")
+
+legend("topright", legend = unique(sce$genotype), col = pal, pch = 16)
+
+```
+
+## Summary
+
+### Output
+
+```{r output}
+readr::write_rds(sce, here::here("data/trajectory.Rds"))
+```
+
+### Session
+
+```{r session}
+devtools::session_info()
+```

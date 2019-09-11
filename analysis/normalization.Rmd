@@ -1,0 +1,406 @@
+---
+title: "Normalization"
+author: "James Ashmore"
+date: "2019-08-14"
+output: wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+In this document we are going to compute normalized expression values.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/normalization",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  devtools,
+  here,
+  knitr,
+  patchwork,
+  readr,
+  reshape2,
+  scater,
+  scran
+)
+```
+
+Read experiment data:
+
+```{r}
+sce <- read_rds(here("data/quality.Rds"))
+```
+
+## Methods
+
+Evaluate different normalization methods using a copy of the experiment data:
+
+```{r}
+new <- sce
+```
+
+### Raw {.tabset}
+
+Compute expression values from raw counts without any normalization:
+
+```{r raw-normalize}
+set.seed(1701)
+
+sizeFactors(new) <- 1
+
+new <- computeSpikeFactors(new, general.use = FALSE)
+
+new <- scater::normalize(new)
+
+new <- runPCA(new)
+
+new <- runTSNE(new)
+
+new <- runUMAP(new)
+```
+
+Inspect relative log expression plots coloured by column data:
+
+```{r, fig.height = 5, fig.width = 10}
+var <- c("genotype", "plate")
+
+plt <- lapply(var, function(x) plotRLE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+Inspect dimensionality reduction plots coloured by QC metrics:
+
+#### PCA
+
+```{r raw-pca, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotPCA(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r raw-tsne, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotTSNE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r raw-umap, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotUMAP(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+
+### Library {.tabset}
+
+Compute expression values from raw counts by scaling with library size factors:
+
+```{r library-normalize}
+set.seed(1701)
+
+sizeFactors(new) <- librarySizeFactors(new)
+
+new <- computeSpikeFactors(new, general.use = FALSE)
+
+new <- scater::normalize(new)
+
+new <- runPCA(new)
+
+new <- runTSNE(new)
+
+new <- runUMAP(new)
+```
+
+Inspect relative log expression plots coloured by column data:
+
+```{r, fig.height = 5, fig.width = 10}
+var <- c("genotype", "plate")
+
+plt <- lapply(var, function(x) plotRLE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+Inspect dimensionality reduction plots coloured by QC metrics:
+
+#### PCA
+
+```{r library-pca, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotPCA(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r library-tsne, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotTSNE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r library-umap, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotUMAP(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+### Deconvolution {.tabset}
+
+Compute expression values from raw counts by scaling with "deconvolved" size factors:
+
+```{r deconvolution-normalize}
+set.seed(1701)
+
+cls <- quickCluster(new, use.ranks = FALSE)
+
+new <- computeSumFactors(new, cluster = cls, min.mean = 1)
+
+new <- computeSpikeFactors(new, general.use = FALSE)
+
+new <- scater::normalize(new)
+
+new <- runPCA(new)
+
+new <- runTSNE(new)
+
+new <- runUMAP(new)
+```
+
+Inspect relative log expression plots coloured by column data:
+
+```{r, fig.height = 5, fig.width = 10}
+var <- c("genotype", "plate")
+
+plt <- lapply(var, function(x) plotRLE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+Inspect dimensionality reduction plots coloured by QC metrics:
+
+#### PCA
+
+```{r deconvolution-pca, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotPCA(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r deconvolution-tsne, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotTSNE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r deconvolution-umap, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotUMAP(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+### Spike {.tabset}
+
+Compute expression values from raw counts by scaling with spike-in size factors:
+
+```{r spike-normalize}
+set.seed(1701)
+
+new <- computeSpikeFactors(new, general.use = TRUE)
+
+new <- scater::normalize(new)
+
+new <- runPCA(new)
+
+new <- runTSNE(new)
+
+new <- runUMAP(new)
+```
+
+Inspect relative log expression plots coloured by column data:
+
+```{r, fig.height = 5, fig.width = 10}
+var <- c("genotype", "plate")
+
+plt <- lapply(var, function(x) plotRLE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+Inspect dimensionality reduction plots coloured by QC metrics:
+
+#### PCA
+
+```{r spike-pca, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotPCA(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r spike-tsne, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotTSNE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r spike-umap, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotUMAP(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+### Downsample {.tabset}
+
+Compute expression values from raw counts by downsampling:
+
+```{r downsample-normalize}
+set.seed(1701)
+
+lib <- librarySizeFactors(new)
+
+fct <- min(lib) / lib
+
+counts(new) <- DropletUtils::downsampleMatrix(counts(new), prop = fct)
+
+sizeFactors(new) <- librarySizeFactors(new)
+
+new <- computeSpikeFactors(new, general.use = FALSE)
+
+new <- scater::normalize(new)
+
+new <- runPCA(new)
+
+new <- runTSNE(new)
+
+new <- runUMAP(new)
+```
+
+Inspect relative log expression plots coloured by column data:
+
+```{r, fig.height = 5, fig.width = 10}
+var <- c("genotype", "plate")
+
+plt <- lapply(var, function(x) plotRLE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+Inspect dimensionality reduction plots coloured by QC metrics:
+
+#### PCA
+
+```{r downsample-pca, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotPCA(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r downsample-tsne, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotTSNE(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r downsample-umap, fig.height = 8, fig.width = 10}
+var <- c("genotype", "plate", "log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT")
+
+plt <- lapply(var, function(x) plotUMAP(new, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+## Selection
+
+Apply the chosen normalization to the original experiment data:
+
+```{r}
+set.seed(1701)
+
+cls <- quickCluster(sce, use.ranks = FALSE)
+
+sce <- computeSumFactors(sce, cluster = cls, min.mean = 1)
+
+sce <- computeSpikeFactors(sce, general.use = FALSE)
+
+sce <- normalize(sce)
+```
+
+## Summary
+
+### Output
+
+```{r output}
+write_rds(sce, here("data/normalization.Rds"))
+```
+
+## Session
+
+Print version information:
+
+```{r session}
+session_info()
+```

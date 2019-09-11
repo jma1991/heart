@@ -1,0 +1,399 @@
+---
+title: "Feature selection"
+author: "James Ashmore"
+date: "2019-08-14"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+In this document we are going to select features for downstream processing.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/feature",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  eulerr,
+  readr,
+  pheatmap,
+  scales,
+  scater,
+  scran
+)
+```
+
+Read object from file:
+
+```{r}
+sce <- read_rds(here::here("data/normalization.Rds"))
+
+spk <- grepl("ERCC", rownames(sce))
+
+sce <- splitAltExps(sce, ifelse(spk, "ERCC", "gene"))
+```
+
+## Measuring variation
+
+### Variance of expression {.tabset}
+
+Fit a mean-dependent trend to the gene-specific variances:
+
+#### Genes
+
+```{r}
+mod <- modelGeneVar(sce)
+
+metadata(sce)$modelGeneVar <- mod
+
+dat <- as.data.frame(mod)
+
+ggplot(dat, aes(mean, total)) +
+  geom_point(colour = "grey") +
+  geom_line(aes(y = tech)) +
+  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
+  theme_minimal()
+```
+
+#### Spikes
+
+```{r}
+mod <- modelGeneVarWithSpikes(sce, "ERCC")
+
+alt <- metadata(mod)
+
+df1 <- as.data.frame(mod)
+
+df2 <- data.frame(mean = alt$mean, total = alt$var)
+
+ggplot(df1, aes(mean, total)) + 
+  geom_point(colour = "grey") + 
+  geom_line(aes(mean, tech)) + 
+  geom_point(data = df2, aes(mean, total), colour = "red") +
+  labs(x = "Mean of log-expression", y = "Variance of log-expression") + 
+  theme_minimal()
+```
+
+#### Poisson
+
+```{r}
+mod <- modelGeneVarByPoisson(sce)
+
+dat <- as.data.frame(mod)
+
+ggplot(dat, aes(mean, total)) +
+  geom_point(colour = "grey") +
+  geom_line(aes(mean, tech)) +
+  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
+  theme_minimal()
+```
+
+### Coefficient of variation {.tabset}
+
+Model the technical coefficient of variation as a function of the mean, and determine the significance of highly variable genes.
+
+#### Genes
+
+```{r}
+mod <- modelGeneCV2(sce)
+
+dat <- as.data.frame(mod)
+
+ggplot(dat, aes(mean, total)) +
+  geom_point(colour = "grey") +
+  geom_line(aes(mean, trend)) +
+  scale_x_log10(name = "Mean of expression", labels = comma) +
+  scale_y_log10(name = "Coefficient of variation", labels = comma) +
+  theme_minimal()
+```
+
+#### Spikes
+
+```{r}
+mod <- modelGeneCV2WithSpikes(sce, "ERCC")
+
+alt <- metadata(mod)
+
+df1 <- as.data.frame(mod)
+
+df2 <- data.frame(mean = alt$mean, total = alt$cv2)
+
+ggplot(df1, aes(mean, total)) + 
+  geom_point(colour = "grey") + 
+  geom_point(data = df2, mapping = aes(mean, total), colour = "red") + 
+  geom_line(aes(mean, trend)) + 
+  scale_x_log10(name = "Mean of expression", labels = comma) + 
+  scale_y_log10(name = "Coefficient of variation", labels = comma) + 
+  theme_minimal()
+```
+
+### Dropout rate
+
+Fit a Michaelis-Menten model to the pattern of dropouts in the data:
+
+```{r}
+mat <- normcounts(normalize(sce, return_log = FALSE))
+
+var <- M3Drop::bg__calc_variables(mat)
+
+fit <- M3Drop::bg__fit_MM(var$p, var$s)
+
+dat <- data.frame(mean = var$s, rate = var$p, trend = fit$predictions)
+
+ggplot(dat, aes(mean, rate)) +
+  geom_point(colour = "grey") +
+  geom_line(aes(mean, trend)) +
+  scale_x_log10(labels = comma) +
+  labs(x = "Mean of expression", y = "Dropout rate") +
+  theme_minimal()
+```
+
+## Selecting genes
+
+### Highly variable gene {.tabset}
+
+Model the per-gene variance:
+
+```{r}
+mod <- modelGeneVarWithSpikes(sce, "ERCC")
+
+sig <- subset(mod, FDR < 0.01)
+
+sel <- rownames(sig)
+
+metadata(sce)$modelGeneVarWithSpikes <- sel
+```
+
+Plot heatmap of gene expression values:
+
+```{r}
+plotHeatmap(sce, metadata(sce)$modelGeneVarWithSpikes, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+```
+
+### Correlated genes
+
+```{r}
+mod <- correlatePairs(sce, subset.row = metadata(sce)$modelGeneVarWithSpikes)
+
+sig <- subset(mod, FDR < 0.01)
+
+sel <- union(sig$gene1, sig$gene2)
+
+metadata(sce)$correlatePairs <- sel
+```
+
+Plot heatmap of correlated gene expression values:
+
+```{r}
+plotHeatmap(sce, metadata(sce)$correlatePairs, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+```
+
+### High coefficient of variation {.tabset}
+
+```{r}
+mod <- modelGeneCV2WithSpikes(sce, "ERCC")
+
+mod$FDR <- p.adjust(mod$p.value, method = "fdr")
+
+sig <- subset(mod, FDR < 0.01)
+
+sel <- rownames(sig)
+
+metadata(sce)$modelGeneCV2WithSpikes <- sel
+```
+
+Plot heatmap of genes:
+
+```{r}
+plotHeatmap(sce, metadata(sce)$modelGeneCV2WithSpikes, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+```
+
+### High loading genes {.tabset}
+
+Use principal components analysis to identify high loading genes:
+
+```{r}
+mat <- logcounts(sce)
+
+pca <- calculatePCA(t(mat))
+
+var <- attr(pca, "percentVar")
+
+num <- PCAtools::findElbowPoint(var)
+
+len <- seq_len(num)
+
+sum <- rowSums(abs(pca[, len]))
+
+names(sum) <- rownames(sce)
+
+ids <- sort(sum, decreasing = TRUE)
+
+ids <- head(ids, n = 500)
+
+sel <- names(ids)
+
+metadata(sce)$findElbowPoint <- sel
+```
+
+Plot heatmap of high loading genes:
+
+```{r}
+plotHeatmap(sce, metadata(sce)$findElbowPoint, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+```
+
+### High dropout genes {.tabset}
+
+Fit Michaelis-Menten curve to model high dropout genes:
+
+```{r}
+sce <- normalize(sce, return_log = FALSE)
+
+mat <- normcounts(sce)
+
+fit <- M3Drop::M3DropFeatureSelection(mat, suppress.plot = TRUE)
+
+sel <- fit$Gene
+
+metadata(sce)$M3DropFeatureSelection <- sel
+```
+
+Plot heatmap of high dropout genes:
+
+```{r}
+plotHeatmap(sce, metadata(sce)$M3DropFeatureSelection, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+```
+
+## Comparison
+
+### Euler
+
+Compare number of features selected using an Euler diagram:
+
+```{r}
+sel <- cbind(
+  "All" = rownames(sce) %in% rownames(sce),
+  "M3D" = rownames(sce) %in% metadata(sce)$M3DropFeatureSelection,
+  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes,
+  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2WithSpikes,
+  "PCA" = rownames(sce) %in% metadata(sce)$findElbowPoint,
+  "Rho" = rownames(sce) %in% metadata(sce)$correlatePairs
+)
+
+fit <- euler(sel)
+
+pal <- RColorBrewer::brewer.pal(n = 5, name = "Pastel1")
+
+lab <- comma(fit$original.values)
+
+plot(fit, fills = pal, quantities = lab)
+```
+
+### Jaccard
+
+Calculate Jaccard index:
+
+```{r}
+sel <- rbind(
+  "M3D" = rownames(sce) %in% metadata(sce)$M3DropFeatureSelection,
+  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes,
+  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2WithSpikes,
+  "PCA" = rownames(sce) %in% metadata(sce)$findElbowPoint,
+  "Rho" = rownames(sce) %in% metadata(sce)$correlatePairs
+)
+
+dst <- proxy::dist(sel, method = "Jaccard", diag = TRUE, upper = TRUE)
+
+mat <- as.matrix(dst)
+
+pal <- RColorBrewer::brewer.pal(n = 5, name = "Greens")
+
+col <- colorRampPalette(pal)(10)
+
+brk <- seq(0, 1, length.out = 11)
+
+pheatmap(mat, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+### Dimensionality reduction {.tabset}
+
+```{r}
+sel <- c("M3DropFeatureSelection", "modelGeneVarWithSpikes", "modelGeneCV2WithSpikes", "findElbowPoint", "correlatePairs")
+```
+
+#### PCA
+
+```{r, fig.height = 11, fig.width = 10}
+plt <- lapply(sel, function(x) {
+  set.seed(1701)
+  row <- metadata(sce)[[x]]
+  plotPCA(sce, colour_by = "genotype", rerun = TRUE, run_args = list(subset_row = row)) + ggtitle(x)
+})
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r, fig.height = 11, fig.width = 10}
+plt <- lapply(sel, function(x) {
+  set.seed(1701)
+  row <- metadata(sce)[[x]]
+  plotTSNE(sce, colour_by = "genotype", rerun = TRUE, run_args = list(subset_row = row)) + ggtitle(x)
+})
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r, fig.height = 11, fig.width = 10}
+plt <- lapply(sel, function(x) {
+  set.seed(1701)
+  row <- metadata(sce)[[x]]
+  plotUMAP(sce, colour_by = "genotype", rerun = TRUE, run_args = list(subset_row = row)) + ggtitle(x)
+})
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+
+## Selection
+
+Select features to use for downstream processing:
+
+```{r}
+sel <- rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes
+rowData(sce)$selected <- sel 
+```
+
+## Summary
+
+### Output
+
+```{r output}
+write_rds(sce, here::here("data/feature.Rds"))
+```
+
+### Session
+
+```{r session}
+devtools::session_info()
+```

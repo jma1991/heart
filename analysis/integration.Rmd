@@ -1,0 +1,180 @@
+---
+title: "Integration"
+author: "James Ashmore"
+date: "2019-08-23"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Motivation
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/integration",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(
+  batchelor,
+  devtools,
+  here,
+  patchwork,
+  readr,
+  scater,
+  scran
+)
+```
+
+Read experiment data:
+
+```{r readr}
+sce <- read_rds(here("data/feature.Rds"))
+```
+
+## Diagnosis
+
+### Explanatory variables
+
+Plot explanatory variables ordered by percentage of variance explained:
+
+```{r}
+plotExplanatoryVariables(sce, nvars_to_plot = 10)
+```
+
+### Dimensionality reduction {.tabset}
+
+Inspect dimensionality reduction plots coloured by explanatory variables:
+
+#### PCA
+
+```{r}
+set.seed(1701)
+
+row <- rowData(sce)$selected
+
+sce <- runPCA(sce, subset_row = row)
+
+var <- c("tissue", "genotype", "age", "plate")
+
+plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r}
+set.seed(1701)
+
+row <- rowData(sce)$selected
+
+sce <- runTSNE(sce, subset_row = row)
+
+var <- c("tissue", "genotype", "age", "plate")
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r}
+set.seed(1701)
+
+row <- rowData(sce)$selected
+
+sce <- runUMAP(sce, subset_row = row)
+
+var <- c("tissue", "genotype", "age", "plate")
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+## Correction
+
+```{r, eval = FALSE}
+set.seed(1701)
+
+mnn <- fastMNN(sce, batch = colData(sce)$plate, subset.row = rowData(sce)$selected)
+
+reducedDim(sce, "MNN") <- reducedDim(mnn, "corrected")
+```
+
+## Validation
+
+### Dimensionality reduction {.tabset}
+
+Inspect dimensionality reduction plots coloured by explanatory variables:
+
+```{r, eval = FALSE}
+row <- rowData(sce)$selected
+
+var <- c("tissue", "genotype", "age", "plate")
+```
+
+#### PCA
+
+```{r, eval = FALSE}
+plt <- lapply(var, function(x) plotReducedDim(sce, "MNN", colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r, eval = FALSE}
+set.seed(1701)
+
+sce <- runTSNE(sce, "MNN", subset_row = row)
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r, eval = FALSE}
+set.seed(1701)
+
+sce <- runUMAP(sce, "MNN", subset_row = row)
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+wrap_plots(plt, ncol = 2)
+```
+
+## Summary
+
+### Output files
+
+Write experiment data:
+
+```{r}
+write_rds(sce, here("data/integration.Rds"))
+```
+
+### Session information
+
+Print version information:
+
+```{r}
+session_info()
+```

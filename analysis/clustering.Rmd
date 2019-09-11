@@ -1,0 +1,335 @@
+---
+title: "Clustering"
+author: "James Ashmore"
+date: "2019-08-14"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Motivation
+
+Clustering is an unsupervised learning procedure that is used in scRNA-seq data analysis to empirically define groups of cells with similar expression profiles. Here, we demonstrate the application of several commonly used clustering methods with our experiment data.
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/clustering",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r}
+pacman::p_load(
+  cluster,
+  devtools,
+  here,
+  igraph,
+  pheatmap,
+  readr,
+  scater,
+  scran
+)
+```
+
+Read experiment data:
+
+```{r}
+sce <- read_rds(here("data/dimension.Rds"))
+```
+
+## Graph-based clustering
+
+### Scran {.tabset}
+
+Perform clustering using rank-based weights followed by Walktrap clustering:
+
+```{r}
+snn <- buildSNNGraph(sce, type = "rank", use.dimred = "PCA")
+
+cls <- cluster_walktrap(snn)$membership
+
+sce$cluster_walktrap <- factor(cls)
+```
+
+Inspect dimensionality reduction plots coloured by explanatory variables:
+
+#### PCA
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+###
+
+Calculate the modularity of each cluster:
+
+```{r}
+mod <- clusterModularity(snn, sce$cluster_walktrap, as.ratio = TRUE)
+
+mod <- Matrix::forceSymmetric(mod)
+
+pal <- RColorBrewer::brewer.pal(5, "Greens")
+
+col <- colorRampPalette(pal)(10)
+
+brk <- seq(0, max(mod), length.out = 11)
+
+pheatmap(mod, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+### Seurat {.tabset}
+
+Perform clustering using Jaccard-based weights followed by Louvain clustering:
+
+```{r}
+snn <- buildSNNGraph(sce, type = "jaccard", use.dimred = "PCA")
+
+cls <- cluster_louvain(snn)$membership
+
+sce$cluster_walktrap <- factor(cls)
+```
+
+Inspect dimensionality reduction plots coloured by explanatory variables:
+
+#### PCA
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "cluster_walktrap"),
+  ncol = 2
+)
+```
+
+###
+
+Calculate the modularity of each cluster:
+
+```{r}
+mod <- clusterModularity(snn, sce$cluster_walktrap, as.ratio = TRUE)
+
+mod <- Matrix::forceSymmetric(mod)
+
+pal <- RColorBrewer::brewer.pal(5, "Greens")
+
+col <- colorRampPalette(pal)(10)
+
+brk <- seq(0, max(mod), length.out = 11)
+
+pheatmap(mod, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+## K-means
+
+### Compute clusters
+
+Perform k-means clustering on the PCA matrix:
+
+```{r}
+set.seed(1701)
+
+dim <- reducedDim(sce, "PCA")
+
+gap <- clusGap(dim, kmeans, K.max = 50)
+
+num <- maxSE(gap$Tab[, "gap"], gap$Tab[, "SE.sim"])
+
+cls <- kmeans(dim, centers = num)
+
+sce$cluster_kmeans <- factor(cls$cluster)
+```
+
+### Inspect clusters {.tabset}
+
+Inspect dimensionality reduction plots coloured by clusters:
+
+#### PCA
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "cluster_kmeans"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "cluster_kmeans"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "cluster_kmeans"),
+  ncol = 2
+)
+```
+
+### Check separation
+
+Plot the distances between clusters using their centroids:  
+
+```{r}
+tab <- tabulate(cls$cluster)
+
+dat <- data.frame(wcss = cls$withinss, ncells = tab)
+
+dat$rms <- sqrt(dat$wcss / dat$ncells)
+
+hcl <- hclust(dist(cls$centers), "ward.D2")
+
+plot(hcl)
+```
+
+## Hierarchical
+
+### Compute clusters
+
+Perform hierarchical cluster analysis on the PCA data:
+
+```{r}
+dim <- reducedDim(sce, "PCA")
+
+dst <- dist(dim)
+
+cls <- hclust(dst, "ward.D2")
+
+mat <- as.matrix(dst)
+
+cut <- dynamicTreeCut::cutreeDynamic(cls, distM = mat)
+
+sce$cluster_hclust <- factor(cut)
+```
+
+### Inspect clusters {.tabset}
+
+Inspect dimensionality reduction plots coloured by clusters:
+
+#### PCA
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "genotype"),
+  plotPCA(sce, colour_by = "cluster_hclust"),
+  ncol = 2
+)
+```
+
+#### TSNE
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "genotype"),
+  plotTSNE(sce, colour_by = "cluster_hclust"),
+  ncol = 2
+)
+```
+
+#### UMAP
+
+```{r, fig.height = 4, fig.width = 10}
+patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "genotype"),
+  plotUMAP(sce, colour_by = "cluster_hclust"),
+  ncol = 2
+)
+```
+
+### Check separation
+
+Compute silhouette information:
+
+```{r}
+sil <- silhouette(cut, dist = dst)
+
+plot(sil)
+```
+
+## Selection
+
+Choose clustering method for downstream analysis:
+
+```{r}
+sce$cluster <- sce$cluster_hclust
+```
+
+## Summary
+
+### Output
+
+Write experiment data:
+
+```{r}
+write_rds(sce, here("data/clustering.Rds"))
+```
+
+### Session
+
+Print session information:
+
+```{r}
+session_info()
+```
