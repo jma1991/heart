@@ -34,7 +34,7 @@ navbar:
   right:
   - icon: fa-github
     text: Source code
-    href: https://github.com/heart/heart
+    href: https://github.com/jma1991/heart
 output:
   workflowr::wflow_html:
     toc: yes
