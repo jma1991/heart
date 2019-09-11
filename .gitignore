@@ -1,0 +1,35 @@
+# Misc
+.DS_Store
+
+# History files
+.Rhistory
+.Rapp.history
+
+# RStudio files
+.Rproj.user
+.RData
+.Ruserdata
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# Packrat
+packrat/lib*/
+packrat/src/
+
+# Analysis
+analysis/figure
+analysis/*png
+analysis/*html
+analysis/cache
+analysis/site_libs
+
+# Data
+data/
+
+# Build
+build-logs/
+
+# Output
+!output/*/*.gz

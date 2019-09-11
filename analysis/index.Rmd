@@ -1,0 +1,31 @@
+---
+title: "Home"
+site: workflowr::wflow_site
+output:
+  workflowr::wflow_html:
+    toc: false
+editor_options:
+  chunk_output_type: console
+---
+
+This is the home page.
+
+## Questions
+
+## References
+
+The following materials were used:
+
+ * [Orchestrating Single-Cell Analysis with Bioconductor](https://osca.bioconductor.org)
+ * [simpleSingleCell](https://bioconductor.org/packages/release/workflows/html/simpleSingleCell.html)
+ * [A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor](https://f1000research.com/articles/5-2122)
+ * [Analysis of single cell RNA-seq data](https://scrnaseq-course.cog.sanger.ac.uk/website/index.html)
+
+## Thanks
+
+I would like to thank [Luke Zappia](https://github.com/lazappi) for unknowingly inspiring me to build my own scRNA-seq workflow.
+
+## License
+
+This analysis is licensed under the [MIT](#LICENSE) license.
+Copyright © 2018, James Ashmore
