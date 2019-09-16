@@ -1,0 +1,63 @@
+---
+title: "Doublet detection"
+author: "James Ashmore"
+date: "2019-09-16"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+In this document we are going to identify potential doublet cells
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/doublet",
+  dev        = "png",
+  echo       = TRUE,
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r}
+pacman::p_load(scran)
+```
+
+Read experiment data:
+
+```{r}
+sce <- readr::read_rds(here::here("data/clustering.Rds"))
+```
+
+## Doublet clusters
+
+## Doublet cells
+
+## Summary
+
+### Output
+
+Write experiment data:
+
+```{r}
+readr::write_rds(here::here("data/doublet.Rds"))
+```
+
+### Session
+
+Print session information:
+
+```{r}
+devtools::session_info()
+```

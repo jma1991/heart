@@ -9,14 +9,32 @@ editor_options:
 
 ## Introduction
 
+In this document we are going to deploy an iSEE shiny application in order to allow users to explore the processed data through a web browser (https://jashmore.shinyapps.io/heart)
+
+## Setup
+
+Load required packages:
+
+```{r}
+pacman::p_load(rsconnect)
+```
+
+Update all repositories:
+
+```{r}
+options(repos = BiocManager::repositories())
+```
+
+Copy required files:
+
+```{r}
+file.copy(here::here("data/trajectory.Rds"), here::here("shiny/data.Rds"), overwrite = TRUE)
+```
 
 ## Deployment
 
-Deploy the iSEE shiny application to the shinyapps.io by RStudio server:
+Deploy the iSEE shiny application to the shinyapps.io server:
 
 ```{r}
-library(rsconnect)
-options(repos = BiocManager::repositories())
-rsconnect::deployApp("shiny", appName = "heart", appTitle = "Heart", account = "jashmore")
+rsconnect::deployApp(appDir = "shiny", appName = "heart", appTitle = "Heart", account = "jashmore", launch.browser = FALSE, forceUpdate = TRUE)
 ```
-

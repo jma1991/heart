@@ -52,23 +52,27 @@ sce <- read_rds(here("data/feature.Rds"))
 Plot explanatory variables ordered by percentage of variance explained:
 
 ```{r}
-plotExplanatoryVariables(sce, nvars_to_plot = 10)
+var <- colData(sce)[, c("genotype", "barcodes", "lane", "plate", "phase")]
+
+plotExplanatoryVariables(sce, nvars_to_plot = 10, variables = var)
 ```
 
 ### Dimensionality reduction {.tabset}
 
 Inspect dimensionality reduction plots coloured by explanatory variables:
 
+```{r}
+row <- rowData(sce)$selected
+
+var <- c("genotype", "barcodes", "lane", "plate", "phase")
+```
+
 #### PCA
 
 ```{r}
 set.seed(1701)
 
-row <- rowData(sce)$selected
-
 sce <- runPCA(sce, subset_row = row)
-
-var <- c("tissue", "genotype", "age", "plate")
 
 plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
 
@@ -80,11 +84,7 @@ wrap_plots(plt, ncol = 2)
 ```{r}
 set.seed(1701)
 
-row <- rowData(sce)$selected
-
 sce <- runTSNE(sce, subset_row = row)
-
-var <- c("tissue", "genotype", "age", "plate")
 
 plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
 
@@ -96,11 +96,7 @@ wrap_plots(plt, ncol = 2)
 ```{r}
 set.seed(1701)
 
-row <- rowData(sce)$selected
-
 sce <- runUMAP(sce, subset_row = row)
-
-var <- c("tissue", "genotype", "age", "plate")
 
 plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
 
@@ -126,7 +122,7 @@ Inspect dimensionality reduction plots coloured by explanatory variables:
 ```{r, eval = FALSE}
 row <- rowData(sce)$selected
 
-var <- c("tissue", "genotype", "age", "plate")
+var <- c("genotype", "barcodes", "lane", "plate", "phase")
 ```
 
 #### PCA

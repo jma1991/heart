@@ -19,7 +19,7 @@ Set chunk options:
 knitr::opts_chunk$set(
   autodep    = TRUE,
   cache      = TRUE,
-  cache.path = "cache/02-quality-control",
+  cache.path = "cache/quality",
   dev        = "png",
   error      = FALSE,
   message    = FALSE,
@@ -43,10 +43,16 @@ pacman::p_load(
 )
 ```
 
-Read object from file:
+Read experiment data:
 
 ```{r}
 sce <- read_rds(here("data/import.Rds"))
+```
+
+Remove plate C from experiment:
+
+```{r}
+sce <- sce[, sce$plate != "F"]
 ```
 
 ## Exploration
@@ -67,10 +73,10 @@ Inspect the distributions of QC metrics:
 
 ```{r, fig.height = 9, fig.width = 10}
 patchwork::wrap_plots(
-  plotColData(sce, "log10_total_counts", "plate", colour_by = "genotype"),
-  plotColData(sce, "log10_total_features_by_counts", "plate", colour_by = "genotype"),
-  plotColData(sce, "pct_counts_ERCC", "plate", colour_by = "genotype"),
-  plotColData(sce, "pct_counts_MT", "plate", colour_by = "genotype")
+  plotColData(sce, "log10_total_counts", "genotype", colour_by = "genotype"),
+  plotColData(sce, "log10_total_features_by_counts", "genotype", colour_by = "genotype"),
+  plotColData(sce, "pct_counts_ERCC", "genotype", colour_by = "genotype"),
+  plotColData(sce, "pct_counts_MT", "genotype", colour_by = "genotype")
 )
 ```
 
@@ -81,7 +87,7 @@ Calculate dimenionality reduction data:
 ```{r}
 set.seed(1701)
 sizeFactors(sce) <- librarySizeFactors(sce)
-sce <- scater::normalize(sce)
+sce <- logNormCounts(sce)
 sce <- runPCA(sce)
 sce <- runTSNE(sce)
 sce <- runUMAP(sce)
@@ -93,8 +99,8 @@ Inspect dimensionality reduction plots:
 
 ```{r, fig.height = 9, fig.width = 10}
 patchwork::wrap_plots(
+  plotPCA(sce, colour_by = "tissue"),
   plotPCA(sce, colour_by = "genotype"),
-  plotPCA(sce, colour_by = "plate"),
   plotPCA(sce, colour_by = "log10_total_counts"),
   plotPCA(sce, colour_by = "log10_total_features_by_counts"),
   plotPCA(sce, colour_by = "pct_counts_ERCC"),
@@ -107,8 +113,8 @@ patchwork::wrap_plots(
 
 ```{r, fig.height = 9, fig.width = 10}
 patchwork::wrap_plots(
+  plotTSNE(sce, colour_by = "tissue"),
   plotTSNE(sce, colour_by = "genotype"),
-  plotTSNE(sce, colour_by = "plate"),
   plotTSNE(sce, colour_by = "log10_total_counts"),
   plotTSNE(sce, colour_by = "log10_total_features_by_counts"),
   plotTSNE(sce, colour_by = "pct_counts_ERCC"),
@@ -121,8 +127,8 @@ patchwork::wrap_plots(
 
 ```{r, fig.height = 9, fig.width = 10}
 patchwork::wrap_plots(
+  plotUMAP(sce, colour_by = "tissue"),
   plotUMAP(sce, colour_by = "genotype"),
-  plotUMAP(sce, colour_by = "plate"),
   plotUMAP(sce, colour_by = "log10_total_counts"),
   plotUMAP(sce, colour_by = "log10_total_features_by_counts"),
   plotUMAP(sce, colour_by = "pct_counts_ERCC"),
@@ -140,8 +146,8 @@ We will now perform filtering to remove low-quality cells:
 The first approach to identifying low-quality cells is to apply manual thresholds on the QC metrics:
 
 ```{r}
-qc1 <- sce$total_counts < 10000
-qc2 <- sce$total_features_by_counts < 1000
+qc1 <- sce$log10_total_counts < 5
+qc2 <- sce$log10_total_features_by_counts < 3.7
 qc3 <- sce$pct_counts_ERCC > 5
 qc4 <- sce$pct_counts_MT > 5
 sce$manual <- !(qc1 | qc2 | qc3 | qc4)
@@ -151,10 +157,10 @@ Inspect distribution of QC metrics:
 
 ```{r}
 patchwork::wrap_plots(
-    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "manual"),
-    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "manual"),
-    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "manual"),
-    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "genotype", y = "log10_total_counts", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "genotype", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "genotype", y = "pct_counts_MT", colour_by = "genotype", shape_by = "manual"),
+    plotColData(sce, x = "genotype", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "manual"),
     ncol = 2
 )
 ```
@@ -208,10 +214,10 @@ patchwork::wrap_plots(
 The next approach is to identify cells that are outliers based on the median absolute deviation for the QC metrics:
 
 ```{r}
-qc1 <- isOutlier(sce$log10_total_counts, nmads = 3, type = "lower")
-qc2 <- isOutlier(sce$log10_total_features_by_counts, nmads = 3, type = "lower")
-qc3 <- isOutlier(sce$pct_counts_ERCC, nmads = 3, type = "higher")
-qc4 <- isOutlier(sce$pct_counts_MT, nmads = 3, type = "higher")
+qc1 <- isOutlier(sce$log10_total_counts, nmads = 3, type = "lower", batch = sce$genotype)
+qc2 <- isOutlier(sce$log10_total_features_by_counts, nmads = 3, type = "lower", batch = sce$genotype)
+qc3 <- isOutlier(sce$pct_counts_ERCC, nmads = 3, type = "higher", batch = sce$genotype)
+qc4 <- isOutlier(sce$pct_counts_MT, nmads = 3, type = "higher", batch = sce$genotype)
 sce$adaptive <- !(qc1 | qc2 | qc3 | qc4)
 ```
 
@@ -219,10 +225,10 @@ Inspect distribution of QC metrics:
 
 ```{r}
 patchwork::wrap_plots(
-    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "adaptive"),
-    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "adaptive"),
-    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "adaptive"),
-    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "genotype", y = "log10_total_counts", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "genotype", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "genotype", y = "pct_counts_MT", colour_by = "genotype", shape_by = "adaptive"),
+    plotColData(sce, x = "genotype", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "adaptive"),
     ncol = 2
 )
 ```
@@ -276,7 +282,7 @@ patchwork::wrap_plots(
 The last approach is to perform a PCA on the QC metrics for each cell:
 
 ```{r}
-run <- runPCA(sce, use_coldata = TRUE, detect_outliers = TRUE)
+run <- runColDataPCA(sce, outliers = TRUE, variables = c("log10_total_counts", "log10_total_features_by_counts", "pct_counts_ERCC", "pct_counts_MT"))
 sce$outlier <- !run$outlier
 ```
 
@@ -284,10 +290,10 @@ Inspect distribution of QC metrics:
 
 ```{r}
 patchwork::wrap_plots(
-    plotColData(sce, x = "plate", y = "log10_total_counts", colour_by = "genotype", shape_by = "outlier"),
-    plotColData(sce, x = "plate", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "outlier"),
-    plotColData(sce, x = "plate", y = "pct_counts_MT", colour_by = "genotype", shape_by = "outlier"),
-    plotColData(sce, x = "plate", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "genotype", y = "log10_total_counts", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "genotype", y = "log10_total_features_by_counts", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "genotype", y = "pct_counts_MT", colour_by = "genotype", shape_by = "outlier"),
+    plotColData(sce, x = "genotype", y = "pct_counts_ERCC", colour_by = "genotype", shape_by = "outlier"),
     ncol = 2
 )
 ```

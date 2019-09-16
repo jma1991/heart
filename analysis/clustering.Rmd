@@ -37,6 +37,7 @@ pacman::p_load(
   igraph,
   pheatmap,
   readr,
+  SC3,
   scater,
   scran
 )
@@ -48,9 +49,9 @@ Read experiment data:
 sce <- read_rds(here("data/dimension.Rds"))
 ```
 
-## Graph-based clustering
+## Graph
 
-### Scran {.tabset}
+### Walktrap {.tabset}
 
 Perform clustering using rank-based weights followed by Walktrap clustering:
 
@@ -62,40 +63,6 @@ cls <- cluster_walktrap(snn)$membership
 sce$cluster_walktrap <- factor(cls)
 ```
 
-Inspect dimensionality reduction plots coloured by explanatory variables:
-
-#### PCA
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotPCA(sce, colour_by = "genotype"),
-  plotPCA(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-#### TSNE
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotTSNE(sce, colour_by = "genotype"),
-  plotTSNE(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-#### UMAP
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotUMAP(sce, colour_by = "genotype"),
-  plotUMAP(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-###
-
 Calculate the modularity of each cluster:
 
 ```{r}
@@ -112,7 +79,39 @@ brk <- seq(0, max(mod), length.out = 11)
 pheatmap(mod, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
 ```
 
-### Seurat {.tabset}
+Inspect dimensionality reduction plots coloured by explanatory variables:
+
+#### PCA
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_walktrap", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_walktrap", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_walktrap", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+### Louvain {.tabset}
 
 Perform clustering using Jaccard-based weights followed by Louvain clustering:
 
@@ -121,47 +120,13 @@ snn <- buildSNNGraph(sce, type = "jaccard", use.dimred = "PCA")
 
 cls <- cluster_louvain(snn)$membership
 
-sce$cluster_walktrap <- factor(cls)
+sce$cluster_louvain <- factor(cls)
 ```
-
-Inspect dimensionality reduction plots coloured by explanatory variables:
-
-#### PCA
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotPCA(sce, colour_by = "genotype"),
-  plotPCA(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-#### TSNE
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotTSNE(sce, colour_by = "genotype"),
-  plotTSNE(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-#### UMAP
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotUMAP(sce, colour_by = "genotype"),
-  plotUMAP(sce, colour_by = "cluster_walktrap"),
-  ncol = 2
-)
-```
-
-###
 
 Calculate the modularity of each cluster:
 
 ```{r}
-mod <- clusterModularity(snn, sce$cluster_walktrap, as.ratio = TRUE)
+mod <- clusterModularity(snn, sce$cluster_louvain, as.ratio = TRUE)
 
 mod <- Matrix::forceSymmetric(mod)
 
@@ -174,9 +139,39 @@ brk <- seq(0, max(mod), length.out = 11)
 pheatmap(mod, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
 ```
 
-## K-means
+Inspect dimensionality reduction plots coloured by explanatory variables:
 
-### Compute clusters
+#### PCA
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_louvain", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### TSNE
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_louvain", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+#### UMAP
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_louvain", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+## K-means {.tabset}
 
 Perform k-means clustering on the PCA matrix:
 
@@ -189,48 +184,24 @@ gap <- clusGap(dim, kmeans, K.max = 50)
 
 num <- maxSE(gap$Tab[, "gap"], gap$Tab[, "SE.sim"])
 
+dat <- data.frame(var = seq_len(50), val = gap$Tab[, "gap"])
+
+ggplot(dat, aes(var, val)) +
+  geom_point() +
+  geom_vline(xintercept = num, colour = "red") +
+  labs(x = "Number of clusters", y = "Gap statistic") +
+  theme_classic()
+```
+
+Select optimal number of clusters:
+
+```{r}
 cls <- kmeans(dim, centers = num)
 
 sce$cluster_kmeans <- factor(cls$cluster)
 ```
 
-### Inspect clusters {.tabset}
-
-Inspect dimensionality reduction plots coloured by clusters:
-
-#### PCA
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotPCA(sce, colour_by = "genotype"),
-  plotPCA(sce, colour_by = "cluster_kmeans"),
-  ncol = 2
-)
-```
-
-#### TSNE
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotTSNE(sce, colour_by = "genotype"),
-  plotTSNE(sce, colour_by = "cluster_kmeans"),
-  ncol = 2
-)
-```
-
-#### UMAP
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotUMAP(sce, colour_by = "genotype"),
-  plotUMAP(sce, colour_by = "cluster_kmeans"),
-  ncol = 2
-)
-```
-
-### Check separation
-
-Plot the distances between clusters using their centroids:  
+Plot the distances between clusters using their centroids:
 
 ```{r}
 tab <- tabulate(cls$cluster)
@@ -244,9 +215,39 @@ hcl <- hclust(dist(cls$centers), "ward.D2")
 plot(hcl)
 ```
 
-## Hierarchical
+Inspect dimensionality reduction plots coloured by explanatory variables:
 
-### Compute clusters
+### PCA
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_kmeans", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+### TSNE
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_kmeans", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+### UMAP
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_kmeans", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+## Hierarchical {.tabset}
 
 Perform hierarchical cluster analysis on the PCA data:
 
@@ -264,43 +265,7 @@ cut <- dynamicTreeCut::cutreeDynamic(cls, distM = mat)
 sce$cluster_hclust <- factor(cut)
 ```
 
-### Inspect clusters {.tabset}
-
-Inspect dimensionality reduction plots coloured by clusters:
-
-#### PCA
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotPCA(sce, colour_by = "genotype"),
-  plotPCA(sce, colour_by = "cluster_hclust"),
-  ncol = 2
-)
-```
-
-#### TSNE
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotTSNE(sce, colour_by = "genotype"),
-  plotTSNE(sce, colour_by = "cluster_hclust"),
-  ncol = 2
-)
-```
-
-#### UMAP
-
-```{r, fig.height = 4, fig.width = 10}
-patchwork::wrap_plots(
-  plotUMAP(sce, colour_by = "genotype"),
-  plotUMAP(sce, colour_by = "cluster_hclust"),
-  ncol = 2
-)
-```
-
-### Check separation
-
-Compute silhouette information:
+Calculate the modularity of each cluster:
 
 ```{r}
 sil <- silhouette(cut, dist = dst)
@@ -308,12 +273,44 @@ sil <- silhouette(cut, dist = dst)
 plot(sil)
 ```
 
+Inspect dimensionality reduction plots coloured by clusters:
+
+### PCA
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_hclust", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotPCA(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+### TSNE
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_hclust", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotTSNE(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
+### UMAP
+
+```{r, fig.height = 8, fig.width = 10}
+var <- c("cluster_hclust", "genotype", "barcodes", "lane", "plate", "phase")
+
+plt <- lapply(var, function(x) plotUMAP(sce, colour_by = x))
+
+patchwork::wrap_plots(plt, ncol = 2)
+```
+
 ## Selection
 
 Choose clustering method for downstream analysis:
 
 ```{r}
-sce$cluster <- sce$cluster_hclust
+sce$cluster <- sce$cluster_louvain
 ```
 
 ## Summary

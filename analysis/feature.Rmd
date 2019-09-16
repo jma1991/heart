@@ -59,11 +59,9 @@ Fit a mean-dependent trend to the gene-specific variances:
 #### Genes
 
 ```{r}
-mod <- modelGeneVar(sce)
+fit <- modelGeneVar(sce)
 
-metadata(sce)$modelGeneVar <- mod
-
-dat <- as.data.frame(mod)
+dat <- as.data.frame(fit)
 
 ggplot(dat, aes(mean, total)) +
   geom_point(colour = "grey") +
@@ -75,28 +73,28 @@ ggplot(dat, aes(mean, total)) +
 #### Spikes
 
 ```{r}
-mod <- modelGeneVarWithSpikes(sce, "ERCC")
+fit <- modelGeneVarWithSpikes(sce, "ERCC")
 
-alt <- metadata(mod)
+alt <- metadata(fit)
 
-df1 <- as.data.frame(mod)
+df1 <- as.data.frame(fit)
 
 df2 <- data.frame(mean = alt$mean, total = alt$var)
 
-ggplot(df1, aes(mean, total)) + 
-  geom_point(colour = "grey") + 
-  geom_line(aes(mean, tech)) + 
+ggplot(df1, aes(mean, total)) +
+  geom_point(colour = "grey") +
+  geom_line(aes(mean, tech)) +
   geom_point(data = df2, aes(mean, total), colour = "red") +
-  labs(x = "Mean of log-expression", y = "Variance of log-expression") + 
+  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
   theme_minimal()
 ```
 
 #### Poisson
 
 ```{r}
-mod <- modelGeneVarByPoisson(sce)
+fit <- modelGeneVarByPoisson(sce)
 
-dat <- as.data.frame(mod)
+dat <- as.data.frame(fit)
 
 ggplot(dat, aes(mean, total)) +
   geom_point(colour = "grey") +
@@ -112,9 +110,9 @@ Model the technical coefficient of variation as a function of the mean, and dete
 #### Genes
 
 ```{r}
-mod <- modelGeneCV2(sce)
+fit <- modelGeneCV2(sce)
 
-dat <- as.data.frame(mod)
+dat <- as.data.frame(fit)
 
 ggplot(dat, aes(mean, total)) +
   geom_point(colour = "grey") +
@@ -127,20 +125,20 @@ ggplot(dat, aes(mean, total)) +
 #### Spikes
 
 ```{r}
-mod <- modelGeneCV2WithSpikes(sce, "ERCC")
+fit <- modelGeneCV2WithSpikes(sce, "ERCC")
 
-alt <- metadata(mod)
+alt <- metadata(fit)
 
-df1 <- as.data.frame(mod)
+df1 <- as.data.frame(fit)
 
 df2 <- data.frame(mean = alt$mean, total = alt$cv2)
 
-ggplot(df1, aes(mean, total)) + 
-  geom_point(colour = "grey") + 
-  geom_point(data = df2, mapping = aes(mean, total), colour = "red") + 
-  geom_line(aes(mean, trend)) + 
-  scale_x_log10(name = "Mean of expression", labels = comma) + 
-  scale_y_log10(name = "Coefficient of variation", labels = comma) + 
+ggplot(df1, aes(mean, total)) +
+  geom_point(colour = "grey") +
+  geom_point(data = df2, mapping = aes(mean, total), colour = "red") +
+  geom_line(aes(mean, trend)) +
+  scale_x_log10(name = "Mean of expression", labels = comma) +
+  scale_y_log10(name = "Coefficient of variation", labels = comma) +
   theme_minimal()
 ```
 
@@ -149,7 +147,9 @@ ggplot(df1, aes(mean, total)) +
 Fit a Michaelis-Menten model to the pattern of dropouts in the data:
 
 ```{r}
-mat <- normcounts(normalize(sce, return_log = FALSE))
+run <- logNormCounts(sce, log = FALSE)
+
+mat <- normcounts(run)
 
 var <- M3Drop::bg__calc_variables(mat)
 
@@ -172,27 +172,31 @@ ggplot(dat, aes(mean, rate)) +
 Model the per-gene variance:
 
 ```{r}
-mod <- modelGeneVarWithSpikes(sce, "ERCC")
+fit <- modelGeneVar(sce)
 
-sig <- subset(mod, FDR < 0.01)
+sig <- subset(fit, bio > 0)
+
+sig <- sig[order(sig$bio, decreasing = TRUE), ]
+
+sig <- head(sig, n = 1000)
 
 sel <- rownames(sig)
 
-metadata(sce)$modelGeneVarWithSpikes <- sel
+metadata(sce)$modelGeneVar <- sel
 ```
 
 Plot heatmap of gene expression values:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$modelGeneVarWithSpikes, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+plotHeatmap(sce, metadata(sce)$modelGeneVar, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### Correlated genes
 
 ```{r}
-mod <- correlatePairs(sce, subset.row = metadata(sce)$modelGeneVarWithSpikes)
+fit <- correlatePairs(sce, subset.row = metadata(sce)$modelGeneVar)
 
-sig <- subset(mod, FDR < 0.01)
+sig <- subset(fit, rho >= 0.5 | rho <= 0.5)
 
 sel <- union(sig$gene1, sig$gene2)
 
@@ -202,27 +206,31 @@ metadata(sce)$correlatePairs <- sel
 Plot heatmap of correlated gene expression values:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$correlatePairs, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+plotHeatmap(sce, metadata(sce)$correlatePairs, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High coefficient of variation {.tabset}
 
 ```{r}
-mod <- modelGeneCV2WithSpikes(sce, "ERCC")
+fit <- modelGeneCV2(sce)
 
-mod$FDR <- p.adjust(mod$p.value, method = "fdr")
+fit$FDR <- p.adjust(fit$p.value, method = "fdr")
 
-sig <- subset(mod, FDR < 0.01)
+sig <- subset(fit, ratio > 1)
+
+sig <- sig[order(sig$ratio, decreasing = TRUE), ]
+
+sig <- head(sig, n = 1000)
 
 sel <- rownames(sig)
 
-metadata(sce)$modelGeneCV2WithSpikes <- sel
+metadata(sce)$modelGeneCV2 <- sel
 ```
 
 Plot heatmap of genes:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$modelGeneCV2WithSpikes, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+plotHeatmap(sce, metadata(sce)$modelGeneCV2, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High loading genes {.tabset}
@@ -246,7 +254,7 @@ names(sum) <- rownames(sce)
 
 ids <- sort(sum, decreasing = TRUE)
 
-ids <- head(ids, n = 500)
+ids <- head(ids, n = 1000)
 
 sel <- names(ids)
 
@@ -256,7 +264,7 @@ metadata(sce)$findElbowPoint <- sel
 Plot heatmap of high loading genes:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$findElbowPoint, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+plotHeatmap(sce, metadata(sce)$findElbowPoint, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High dropout genes {.tabset}
@@ -264,9 +272,9 @@ plotHeatmap(sce, metadata(sce)$findElbowPoint, center = TRUE, zlim = c(-1, 1), s
 Fit Michaelis-Menten curve to model high dropout genes:
 
 ```{r}
-sce <- normalize(sce, return_log = FALSE)
+run <- logNormCounts(sce, log = FALSE)
 
-mat <- normcounts(sce)
+mat <- normcounts(run)
 
 fit <- M3Drop::M3DropFeatureSelection(mat, suppress.plot = TRUE)
 
@@ -278,7 +286,7 @@ metadata(sce)$M3DropFeatureSelection <- sel
 Plot heatmap of high dropout genes:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$M3DropFeatureSelection, center = TRUE, zlim = c(-1, 1), symmetric = TRUE)
+plotHeatmap(sce, metadata(sce)$M3DropFeatureSelection, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ## Comparison
@@ -291,8 +299,8 @@ Compare number of features selected using an Euler diagram:
 sel <- cbind(
   "All" = rownames(sce) %in% rownames(sce),
   "M3D" = rownames(sce) %in% metadata(sce)$M3DropFeatureSelection,
-  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes,
-  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2WithSpikes,
+  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVar,
+  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2,
   "PCA" = rownames(sce) %in% metadata(sce)$findElbowPoint,
   "Rho" = rownames(sce) %in% metadata(sce)$correlatePairs
 )
@@ -313,8 +321,8 @@ Calculate Jaccard index:
 ```{r}
 sel <- rbind(
   "M3D" = rownames(sce) %in% metadata(sce)$M3DropFeatureSelection,
-  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes,
-  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2WithSpikes,
+  "Var" = rownames(sce) %in% metadata(sce)$modelGeneVar,
+  "CV2" = rownames(sce) %in% metadata(sce)$modelGeneCV2,
   "PCA" = rownames(sce) %in% metadata(sce)$findElbowPoint,
   "Rho" = rownames(sce) %in% metadata(sce)$correlatePairs
 )
@@ -329,13 +337,13 @@ col <- colorRampPalette(pal)(10)
 
 brk <- seq(0, 1, length.out = 11)
 
-pheatmap(mat, color = col, breaks = brk, cluster_rows = FALSE, cluster_cols = FALSE)
+pheatmap(mat, color = col, breaks = brk)
 ```
 
 ### Dimensionality reduction {.tabset}
 
 ```{r}
-sel <- c("M3DropFeatureSelection", "modelGeneVarWithSpikes", "modelGeneCV2WithSpikes", "findElbowPoint", "correlatePairs")
+sel <- c("modelGeneVar", "correlatePairs", "modelGeneCV2", "findElbowPoint", "M3DropFeatureSelection")
 ```
 
 #### PCA
@@ -374,14 +382,13 @@ plt <- lapply(sel, function(x) {
 patchwork::wrap_plots(plt, ncol = 2)
 ```
 
-
 ## Selection
 
 Select features to use for downstream processing:
 
 ```{r}
-sel <- rownames(sce) %in% metadata(sce)$modelGeneVarWithSpikes
-rowData(sce)$selected <- sel 
+sel <- rownames(sce) %in% metadata(sce)$modelGeneVar
+rowData(sce)$selected <- sel
 ```
 
 ## Summary

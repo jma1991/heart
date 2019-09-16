@@ -32,8 +32,8 @@ Attach required packages:
 ```{r pacman}
 pacman::p_load(
   cellassign,
-  scater,
-  reticulate
+  reticulate,
+  scater
 )
 ```
 
@@ -76,8 +76,7 @@ plotUMAP(sce, colour_by = "manual_celltype")
 Automatically annotate cells to known types based on the expression patterns of a priori known marker genes:
 
 ```{r}
-
-ann <- readr::read_csv(here::here("docs/markers.csv"))
+ann <- readr::read_csv(here::here("markers.csv"))
 
 rho <- reshape2::dcast(ann, gene ~ cell, length)
 
@@ -94,7 +93,6 @@ py_set_seed(1701)
 fit <- cellassign(sce[sel, ], marker_gene_info = rho[sel, ], s = sizeFactors(sce))
 
 sce$cellassign_celltype <- fit$cell_type
-
 ```
 
 #### PCA

@@ -49,7 +49,7 @@ sce <- readr::read_rds(here::here("data/annotation.Rds"))
 Infer trajectory between all clusters using UMAP dimensions:
 
 ```{r}
-sce <- slingshot(sce, clusterLabels = "cluster", start.clus = "3", end.clus = "4", reducedDim = "UMAP")
+sce <- slingshot(sce, clusterLabels = "cluster", reducedDim = "UMAP")
 ```
 
 Extract slingshot results from experiment data:
@@ -58,26 +58,9 @@ Extract slingshot results from experiment data:
 res <- SlingshotDataSet(sce)
 ```
 
-Inspect UMAP plot coloured by pseudotime:
-
-```{r}
-
-pal <- RColorBrewer::brewer.pal(11, "Spectral")
-
-col <- colorRampPalette(pal)(100)
-
-col <- col[cut(sce$slingPseudotime_1, breaks = 101)]
-
-plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
-
-lines(res, type = "curves")
-
-```
-
 Inspect UMAP plot coloured by clustering:
 
 ```{r}
-
 pal <- RColorBrewer::brewer.pal(9, name = "Set1")
 
 len <- length(unique(sce$cluster))
@@ -93,13 +76,11 @@ plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = 
 lines(res, type = "lineages")
 
 legend("topright", legend = unique(sce$cluster), col = pal, pch = 16)
-
 ```
 
 Inspect UMAP plot coloured by genotype:
 
 ```{r}
-
 pal <- RColorBrewer::brewer.pal(9, name = "Set1")
 
 len <- length(unique(sce$genotype))
@@ -115,15 +96,14 @@ plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = 
 lines(res, type = "lineages")
 
 legend("topright", legend = unique(sce$genotype), col = pal, pch = 16)
-
 ```
 
 ### Cell types
 
-Infer trajectory between all cellassign_celltypes using UMAP dimensions:
+Infer trajectory between all cell types using UMAP dimensions:
 
 ```{r}
-sce <- slingshot(sce, clusterLabels = "cellassign_celltype", start.clus = "LPM", end.clus = "EC", reducedDim = "UMAP")
+sce <- slingshot(sce, clusterLabels = "cellassign_celltype", reducedDim = "UMAP")
 ```
 
 Extract slingshot results from experiment data:
@@ -132,26 +112,9 @@ Extract slingshot results from experiment data:
 res <- SlingshotDataSet(sce)
 ```
 
-Inspect UMAP plot coloured by pseudotime:
-
-```{r}
-
-pal <- RColorBrewer::brewer.pal(11, "Spectral")
-
-col <- colorRampPalette(pal)(100)
-
-col <- col[cut(sce$slingPseudotime_1, breaks = 101)]
-
-plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = "Dimension 2")
-
-lines(res, type = "curves")
-
-```
-
 Inspect UMAP plot coloured by cell type:
 
 ```{r}
-
 pal <- RColorBrewer::brewer.pal(9, name = "Set1")
 
 len <- length(unique(sce$cellassign_celltype))
@@ -167,13 +130,11 @@ plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = 
 lines(res, type = "lineages")
 
 legend("topright", legend = unique(sce$cellassign_celltype), col = pal, pch = 16)
-
 ```
 
 Inspect UMAP plot coloured by genotype:
 
 ```{r}
-
 pal <- RColorBrewer::brewer.pal(9, name = "Set1")
 
 len <- length(unique(sce$genotype))
@@ -189,7 +150,6 @@ plot(res@reducedDim, col = col, pch = 16, asp = 1, xlab = "Dimension 1", ylab = 
 lines(res, type = "lineages")
 
 legend("topright", legend = unique(sce$genotype), col = pal, pch = 16)
-
 ```
 
 ## Summary
