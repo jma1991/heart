@@ -1,0 +1,161 @@
+gene,cell
+Hba-a1,Blood
+Hba-a2,Blood
+Hba-x,Blood
+Hbb-bh1,Blood
+Hbb-bs,Blood
+Hbb-y,Blood
+Snca,Blood
+Gypa,Blood
+Tal1,Blood
+Pecam1,Blood
+Ankrd1,Cardiac
+Myl3,Cardiac
+Myl4,Cardiac
+Myl7,Cardiac
+Nkx2-5,Cardiac
+Tnnc1,Cardiac
+Tnnt2,Cardiac
+Actc1,Cardiac
+Cryab,Cardiac
+Foxf1,Cardiac
+Hand2,Cardiac
+Tagln,Cardiac
+Osr1,Cardiac
+Cd34,Endothelial
+Cdh5,Endothelial
+Ctla2a,Endothelial
+Esam,Endothelial
+Etv2,Endothelial
+Fli1,Endothelial
+Flt1,Endothelial
+Grap,Endothelial
+Icam2,Endothelial
+Kdr,Endothelial
+Lyve1,Endothelial
+Pecam1,Endothelial
+Plvap,Endothelial
+Rasip1,Endothelial
+Rhoj,Endothelial
+Tbx4,Endothelial
+Cldn5,Endothelial
+Tal1,Endothelial
+Sfn,Extraembryonic ectoderm
+Tacstd2,Extraembryonic ectoderm
+Tfap2c,Extraembryonic ectoderm
+Etv2,Extraembryonic ectoderm
+Apoa1,Extraembryonic endoderm
+Apoa4,Extraembryonic endoderm
+Apom,Extraembryonic endoderm
+Ctsh,Extraembryonic endoderm
+Lgals2,Extraembryonic endoderm
+Rbp4,Extraembryonic endoderm
+S100g,Extraembryonic endoderm
+Ttr,Extraembryonic endoderm
+1700011H14Rik,Extraembryonic endoderm
+Plac1,Extraembryonic endoderm
+Spink1,Extraembryonic endoderm
+Pax9,Extraembryonic endoderm
+Upk3a,Extraembryonic endoderm
+Kdr,Extraembryonic mesoderm
+Tbx4,Extraembryonic mesoderm
+Foxf1,Extraembryonic mesoderm
+Hand2,Extraembryonic mesoderm
+Osr1,Extraembryonic mesoderm
+Pitx1,Extraembryonic mesoderm
+Plac1,Extraembryonic mesoderm
+Twist2,Extraembryonic mesoderm
+Nkx2-5,Extraembryonic mesoderm
+Etv2,Extraembryonic mesoderm
+Foxf1,Lateral plate mesoderm
+Hand2,Lateral plate mesoderm
+Osr1,Lateral plate mesoderm
+Aldh1a2,Lateral plate mesoderm
+Foxc2,Lateral plate mesoderm
+Tfap2b,Neural crest
+Foxd3,Neural crest
+Plp1,Neural crest
+Tfap2a,Neural crest
+Tfap2c,Neural crest
+Brachyury,Neuromesodermal progenitor
+Sox2,Neuromesodermal progenitor
+Fgf17,Neuromesodermal progenitor
+Hes3,Neuromesodermal progenitor
+Nkx1-2,Neuromesodermal progenitor
+Epha5,Neuromesodermal progenitor
+Dynlrb2,Notochord
+Fam183b,Notochord
+Noto,Notochord
+1110017D15Rik,Notochord
+Upk3a,Notochord
+Vtn,Notochord
+Pax9,Pharyngeal mesoderm
+Ebf2,Pharyngeal mesoderm or Anterior somites
+Tcf15,Pharyngeal mesoderm or Anterior somites
+Lum,Pharyngeal mesoderm or Anterior somites
+Tbx1,Pharyngeal mesoderm or Anterior somites
+Dll1,Presomitic mesoderm
+Dll3,Presomitic mesoderm
+Pcdh19,Presomitic mesoderm
+Tbx6,Presomitic mesoderm
+Fgf17,Presomitic mesoderm
+Aldh1a2,Presomitic mesoderm
+Meox1,Somitic mesoderm
+Tcf15,Somitic mesoderm
+Wfdc21,Somitic mesoderm
+Foxc2,Somitic mesoderm
+Aldh1a2,Somitic mesoderm
+Cer1,Somitic mesoderm
+Pcdh19,Somitic mesoderm
+Sfn,Surface ectoderm
+Tacstd2,Surface ectoderm
+Tfap2a,Surface ectoderm
+Tfap2c,Surface ectoderm
+Dlx5,Surface ectoderm
+Foxd4,CNS
+Hesx1,CNS
+Lhx5,CNS
+Pax6,CNS
+Six3,CNS
+Sox21,CNS
+Hes3,CNS
+Rax,CNS
+Fezf1,CNS
+En1,CNS
+Lhx5,CNS
+Sox21,CNS
+Hes3,CNS
+Foxd4,CNS
+Pax6,CNS
+Sox21,CNS
+Hes3,CNS
+Hoxa1,CNS
+1700011H14Rik,CNS
+Gpx2,Gut
+Apela,Gut
+Sfn,Gut
+Spink1,Gut
+Tacstd2,Gut
+Vtn,Gut
+Apela,Gut
+Gpx2,Gut
+Epcam,Gut
+Pax9,Gut
+Sfn,Gut
+Spink1,Gut
+Tacstd2,Gut
+Upk3a,Gut
+Vtn,Gut
+1700011H14Rik,Gut
+Tdo2,Mesothelium
+Cryab,Mesothelium
+Foxf1,Mesothelium
+Hand2,Mesothelium
+Lum,Mesothelium
+Pitx1,Mesothelium
+Tagln,Mesothelium
+Tnnc1,Mesothelium
+Tnnt2,Mesothelium
+Twist2,Mesothelium
+Plac1,Mesothelium
+Osr1,Mesothelium
