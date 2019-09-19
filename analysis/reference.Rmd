@@ -1,0 +1,389 @@
+---
+title: "Reference mapping"
+author: "James Ashmore"
+date: "2019-09-18"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Setup
+
+Set chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/reference",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+Load required packages:
+
+```{r pacman}
+pacman::p_load(batchelor, ggalluvial, here, pheatmap, readr, scater, scran, scmap, viridis)
+```
+
+Read experiment data:
+
+```{r}
+sce <- read_rds(here("data/trajectory.Rds"))
+```
+
+Select samples from genotype Het:
+
+```{r}
+sce <- sce[, sce$genotype == "Het"]
+```
+
+Import colour palette for cell types:
+
+```{r}
+pal <- read_csv(here("palette.csv"))
+
+col <- pal$colour
+
+names(col) <- pal$celltype
+```
+
+## Reference
+
+### Installation
+
+Install the MouseGastrulationData package:
+
+```{r, eval = FALSE}
+BiocManager::install("MouseGastrulationData")
+```
+
+Load the MouseGastrulationData package:
+
+```{r}
+pacman::p_load(MouseGastrulationData)
+```
+
+### Selection
+
+Select samples from embryonic stage E8.25:
+
+```{r}
+sel <- subset(AtlasSampleMetadata, stage == "E8.25")
+```
+
+Obtain processed counts from the mouse gastrulation dataset:
+
+```{r}
+ref <- EmbryoAtlasData(type = "processed", samples = sel$sample)
+```
+
+### Modification
+
+Change dimension names to those required by the scater package:
+
+```{r}
+reducedDimNames(ref) <- c("PCA", "UMAP")
+```
+
+Compute log-transformed normalized expression values:
+
+```{r}
+ref <- logNormCounts(ref)
+```
+
+Remove cells with no defined cell type:
+
+```{r}
+nan <- is.na(ref$celltype)
+ref <- ref[, !nan]
+```
+
+### Exploration
+
+Inspect PCA coloured by cell type:
+
+```{r, fig.height = 6, fig.width = 10}
+plt <- plotPCA(ref, colour_by = "celltype")
+
+ggplot(plt$data, aes(X, Y, colour = colour_by)) +
+  geom_point(size = 1) +
+  scale_colour_manual(name = "Cell type", values = col) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_void()
+```
+
+Inspect UMAP coloured by cell type:
+
+```{r, fig.height = 6, fig.width = 10}
+plt <- plotUMAP(ref, colour_by = "celltype")
+
+ggplot(plt$data, aes(X, Y, colour = colour_by)) +
+  geom_point(size = 1) +
+  scale_colour_manual(name = "Cell type", values = col) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_void()
+```
+
+## Projection
+
+### By cluster
+
+Create feature_symbol column required by scmap package:
+
+```{r}
+rowData(sce)$feature_symbol <- uniquifyFeatureNames(rowData(sce)$gene_id, rowData(sce)$gene_name)
+
+rownames(sce) <- rowData(sce)$feature_symbol
+
+rowData(ref)$feature_symbol <- uniquifyFeatureNames(rowData(ref)$ENSEMBL, rowData(ref)$SYMBOL)
+
+rownames(ref) <- rowData(ref)$feature_symbol
+```
+
+Subset both datasets to common universe of genes:
+
+```{r}
+ids <- intersect(rownames(sce), rownames(ref))
+
+sce <- sce[ids, ]
+
+ref <- ref[ids, ]
+```
+
+Select most informative features from the reference dataset:
+
+```{r}
+ref <- selectFeatures(ref, n_features = 2000)
+```
+
+Create a cluster index based on celltype:
+
+```{r}
+ref <- indexCluster(ref, cluster_col = "celltype")
+```
+
+Inspect the cell type index:
+
+```{r}
+idx <- metadata(ref)$scmap_cluster_index
+
+mat <- as.matrix(idx)
+
+brk <- seq(0, max(mat), length.out = 101)
+
+pheatmap(mat, color = viridis(100), breaks = brk, scale = "row")
+```
+
+Project our dataset to the reference dataset:
+
+```{r}
+fit <- scmapCluster(projection = sce, index_list = list(reference = metadata(ref)$scmap_cluster_index))
+
+sce$scmap_cluster_labs <- fit$scmap_cluster_labs[, "reference"]
+```
+
+Plot the assignment of projected cell types:
+
+```{r}
+dat <- data.frame(cluster = sce$cluster, celltype = sce$scmap_cluster_labs)
+
+dat <- plyr::count(dat, vars = c("cluster", "celltype"))
+
+ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
+  geom_alluvium(aes(fill = celltype)) +
+  geom_stratum() +
+  geom_text(stat = "stratum", label.strata = TRUE) +
+  scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
+  scale_fill_manual(name = "Cell type", values = col) +
+  theme_minimal()
+```
+
+Inspect the UMAP coordinates coloured by projected cell type:
+
+```{r}
+plt <- plotUMAP(sce, colour_by = "scmap_cluster_labs")
+
+ggplot(plt$data, aes(X, Y, colour = colour_by)) +
+  geom_point(size = 1) +
+  scale_colour_manual(name = "Cell type", values = col) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_void()
+```
+
+### By cell
+
+Create a cell index:
+
+```{r}
+set.seed(1701)
+
+ref <- indexCell(ref)
+```
+
+Project our dataset to the reference dataset:
+
+```{r}
+num <- round(sqrt(length(unique(ref$celltype))))
+
+fit <- scmapCell(projection = sce, index_list = list(reference = metadata(ref)$scmap_cell_index), w = num)
+
+lab <- apply(fit$reference$cells, 2, function(x) names(which.max(table(ref$celltype[x]))))
+
+sce$scmap_cell_labs <- lab
+```
+
+Plot the assignment of projected cell types:
+
+```{r}
+dat <- data.frame(cluster = sce$cluster, celltype = sce$scmap_cell_labs)
+
+dat <- plyr::count(dat, vars = c("cluster", "celltype"))
+
+ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
+  geom_alluvium(aes(fill = celltype)) +
+  geom_stratum() +
+  geom_text(stat = "stratum", label.strata = TRUE) +
+  scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
+  scale_fill_manual(name = "Cell type", values = col) +
+  theme_minimal()
+```
+
+Inspect the UMAP coordinates coloured by projected cell type:
+
+```{r}
+plt <- plotUMAP(sce, colour_by = "scmap_cell_labs")
+
+ggplot(plt$data, aes(X, Y, colour = colour_by)) +
+  geom_point(size = 1) +
+  scale_colour_manual(name = "Cell type", values = col) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_void()
+```
+
+## Neighbors
+
+Clear spike-in information across batches:
+
+```{r}
+ref <- clearSpikes(ref)
+
+sce <- clearSpikes(sce)
+```
+
+Select genes with positive average biological components:
+
+```{r}
+mod <- model.matrix(~ pool + sample, data = colData(ref))
+
+dec <- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(sce))
+
+hvg <- rownames(dec)[dec$bio > 0]
+```
+
+Correct for batch effects using a fast version of the MNN method:
+
+```{r}
+mnn <- fastMNN(ref, sce, pc.input = TRUE, subset.row = hvg)
+
+reducedDimNames(mnn) <- "MNN"
+```
+
+Add metadata to the combined dataset:
+
+```{r}
+mnn$celltype <- c(ref$celltype, rep("unknown", ncol(sce)))
+
+mnn$pool <- c(ref$pool, rep("unknown", ncol(sce)))
+
+mnn$sample <- c(ref$sample, rep("unknown", ncol(sce)))
+```
+
+Annotate experiment cells using kNN coordinates from reference cells:
+
+```{r}
+sbj <- reducedDim(mnn, "MNN")[mnn$batch == 1, ]
+
+qry <- reducedDim(mnn, "MNN")[mnn$batch == 2, ]
+
+num <- round(sqrt(length(unique(ref$celltype))))
+
+knn <- BiocNeighbors::queryKNN(sbj, qry, k = num)
+
+lab <- apply(knn$index, 1, function(x) names(which.max(table(ref$celltype[x]))))
+
+mnn$celltype[mnn$batch == 2] <- lab
+
+sce$mnn_cell_labs <- lab
+```
+
+Plot the assignment of projected cell types:
+
+```{r}
+dat <- data.frame(cluster = sce$cluster, celltype = sce$mnn_cell_labs)
+
+dat <- plyr::count(dat, vars = c("cluster", "celltype"))
+
+ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
+  geom_alluvium(aes(fill = celltype)) +
+  geom_stratum() +
+  geom_text(stat = "stratum", label.strata = TRUE) +
+  scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
+  scale_fill_manual(name = "Cell type", values = col) +
+  theme_minimal()
+```
+
+Plot UMAP of experiment data coloured by cell type annotation:
+
+```{r}
+plt <- plotUMAP(sce, colour_by = "mnn_cell_labs")
+
+ggplot(plt$data, aes(X, Y, colour = colour_by)) +
+  geom_point(size = 1) +
+  scale_colour_manual(name = "Cell type", values = col) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_void()
+```
+
+Perform UMAP on the PCA data from the combined dataset:
+
+```{r}
+set.seed(1701)
+
+mnn <- runUMAP(mnn, dimred = "MNN")
+```
+
+Plot UMAP of combined dataset:
+
+```{r, fig.height = 6, fig.width = 10}
+plt <- plotUMAP(mnn, colour_by = "celltype", shape_by = "batch")
+
+ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
+  geom_point(alpha = 0.5, size = 0.5) +
+  scale_colour_manual(values = col) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
+  geom_point(data = subset(plt$data, shape_by == 2), aes(X, Y), colour = "black", shape = 4) +
+  theme_void()
+```
+
+## Summary
+
+### Output
+
+Write combined dataset:
+
+```{r}
+write_rds(mnn, here("data/reference.Rds"))
+```
+
+### Session
+
+Print session information:
+
+```{r}
+devtools::session_info()
+```
+
