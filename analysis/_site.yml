@@ -31,6 +31,8 @@ navbar:
       href: trajectory.html
     - text: Interactive
       href: interactive.html
+    - text: Reference
+      href: reference.html
   right:
   - icon: fa-github
     text: Source code
