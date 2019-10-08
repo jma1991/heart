@@ -49,7 +49,7 @@ Read experiment data:
 sce <- read_rds(here("data/import.Rds"))
 ```
 
-Remove plate C from experiment:
+Remove plate F from experiment:
 
 ```{r}
 sce <- sce[, sce$plate != "F"]

@@ -9,30 +9,32 @@ navbar:
     href: about.html
   - text: Analysis
     menu:
-    - text: Import
-      href: import.html
     - text: Quality
       href: quality.html
     - text: Normalization
       href: normalization.html
-    - text: Feature
-      href: feature.html
     - text: Integration
       href: integration.html
+    - text: Feature
+      href: feature.html
     - text: Dimensionality
       href: dimension.html
     - text: Clustering
       href: clustering.html
+    - text: Doublet
+      href: doublet.html
     - text: Markers
       href: markers.html
     - text: Annotation
       href: annotation.html
+    - text: Comparison
+      href: comparison.html
     - text: Trajectory
       href: trajectory.html
-    - text: Interactive
-      href: interactive.html
     - text: Reference
       href: reference.html
+    - text: Interactive
+      href: interactive.html
   right:
   - icon: fa-github
     text: Source code

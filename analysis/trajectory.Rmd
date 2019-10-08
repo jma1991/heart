@@ -39,7 +39,7 @@ pacman::p_load(
 Read experiment data:
 
 ```{r}
-sce <- readr::read_rds(here::here("data/annotation.Rds"))
+sce <- readr::read_rds(here::here("data/comparison.Rds"))
 ```
 
 ## Slingshot

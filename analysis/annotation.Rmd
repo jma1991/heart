@@ -40,7 +40,7 @@ pacman::p_load(
 Import experiment data:
 
 ```{r}
-sce <- readr::read_rds(here::here("data/markers.rds"))
+sce <- readr::read_rds(here::here("data/markers.Rds"))
 ```
 
 ## Annotation
@@ -49,25 +49,25 @@ sce <- readr::read_rds(here::here("data/markers.rds"))
 
 Manually annotate clusters with cell type labels:
 
-```{r, eval = FALSE}
+```{r}
 sce$manual_celltype <- "CellType"
 ```
 
 #### PCA
 
-```{r, eval = FALSE}
+```{r}
 plotPCA(sce, colour_by = "manual_celltype")
 ```
 
 #### t-SNE
 
-```{r, eval = FALSE}
+```{r}
 plotTSNE(sce, colour_by = "manual_celltype")
 ```
 
 #### UMAP
 
-```{r, eval = FALSE}
+```{r}
 plotUMAP(sce, colour_by = "manual_celltype")
 ```
 

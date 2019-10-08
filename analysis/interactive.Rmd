@@ -28,7 +28,7 @@ options(repos = BiocManager::repositories())
 Copy required files:
 
 ```{r}
-file.copy(here::here("data/trajectory.Rds"), here::here("shiny/data.Rds"), overwrite = TRUE)
+file.copy(here::here("data/reference.Rds"), here::here("shiny/data.Rds"), overwrite = TRUE)
 ```
 
 ## Deployment

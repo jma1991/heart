@@ -42,7 +42,7 @@ pacman::p_load(
 Read experiment data:
 
 ```{r}
-sce <- readr::read_rds(here::here("data/integration.Rds"))
+sce <- readr::read_rds(here::here("data/feature.Rds"))
 ```
 
 ## PCA
@@ -56,7 +56,7 @@ set.seed(1701)
 
 sel <- rowData(sce)$selected
 
-sce <- runPCA(sce, subset_row = sel)
+sce <- runPCA(sce, subset_row = sel, exprs_values = "corrected")
 ```
 
 ### Find elbow
@@ -92,7 +92,7 @@ set.seed(1701)
 
 var <- attr(dim, 'percentVar')
 
-mod <- modelGeneVar(sce)
+mod <- modelGeneVar(sce, block = sce$phase)
 
 sel <- rowData(sce)$selected
 

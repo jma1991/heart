@@ -1,15 +1,15 @@
 ---
 title: "Doublet detection"
 author: "James Ashmore"
-date: "2019-09-16"
+date: "2019-10-07"
 output: workflowr::wflow_html
 editor_options:
   chunk_output_type: console
 ---
 
-## Introduction
+## Motivation
 
-In this document we are going to identify potential doublet cells
+In this analysis we are going to identify and remove doublet libraries so that they do not compromise interpretation of the results.
 
 ## Setup
 
@@ -21,7 +21,6 @@ knitr::opts_chunk$set(
   cache      = TRUE,
   cache.path = "cache/doublet",
   dev        = "png",
-  echo       = TRUE,
   error      = FALSE,
   message    = FALSE,
   warning    = FALSE
@@ -31,18 +30,106 @@ knitr::opts_chunk$set(
 Load required packages:
 
 ```{r}
-pacman::p_load(scran)
+pacman::p_load(
+  devtools,
+  here,
+  readr,
+  scater,
+  scran
+)
 ```
 
 Read experiment data:
 
 ```{r}
-sce <- readr::read_rds(here::here("data/clustering.Rds"))
+sce <- read_rds(here("data/clustering.Rds"))
 ```
 
-## Doublet clusters
+## By clusters {.tabset}
 
-## Doublet cells
+Identify potential clusters of doublet cells based on intermediate expression profiles:
+
+```{r}
+dbl <- doubletCluster(sce, sce$cluster)
+```
+
+Inspect output from doublet detection:
+
+```{r}
+print(dbl)
+```
+
+Find putative marker genes:
+
+```{r}
+res <- findMarkers(sce, sce$cluster, block = sce$phase, direction = "up")
+
+sig <- lapply(res, subset, FDR < 0.1)
+
+sig <- Filter(nrow, sig)
+```
+
+Plot a heatmap of expression values for cells in the query cluster and the two source clusters:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+for (n in names(sig)) {
+
+  dat <- sig[[n]]
+  
+  top <- subset(dat, Top <= 10)
+
+  ids <- rownames(top)
+  
+  id1 <- dbl[rownames(dbl) == n, "source1"]
+  
+  id2 <- dbl[rownames(dbl) == n, "source2"]
+  
+  sel <- sce$cluster %in% c(n, id1, id2)
+
+  cat("### Cluster", n, "\n")
+
+  plotHeatmap(sce[, sel], features = ids, x = "cluster", exprs_values = "corrected", colour_columns_by = "cluster", center = TRUE, zlim = c(-1, 1), symmetric = TRUE, cluster_rows = ifelse(length(ids) >= 2, TRUE, FALSE), show_colnames = FALSE)
+
+  cat("\n\n")
+
+}
+```
+
+## By simulation {.tabset}
+
+Identify potential doublet cells based on simulations of putative doublet expression profiles:
+
+```{r}
+set.seed(1701)
+
+sel <- rowData(sce)$selected
+
+num <- ncol(reducedDim(sce, 'PCA'))
+
+dbl <- doubletCells(sce, subset.row = sel, d = num)
+
+sce$doublet_score <- dbl
+```
+
+Plot reduced dimensions coloured by doublet score:
+
+### PCA
+
+```{r}
+plotPCA(sce, colour_by = "doublet_score")
+```
+
+### TSNE
+
+```{r}
+plotTSNE(sce, colour_by = "doublet_score")
+```
+
+### UMAP
+
+```{r}
+plotUMAP(sce, colour_by = "doublet_score")
+```
 
 ## Summary
 
@@ -51,7 +138,7 @@ sce <- readr::read_rds(here::here("data/clustering.Rds"))
 Write experiment data:
 
 ```{r}
-readr::write_rds(here::here("data/doublet.Rds"))
+write_rds(sce, here("data/doublet.Rds"))
 ```
 
 ### Session
@@ -59,5 +146,5 @@ readr::write_rds(here::here("data/doublet.Rds"))
 Print session information:
 
 ```{r}
-devtools::session_info()
+session_info()
 ```

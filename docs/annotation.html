@@ -361,19 +361,16 @@ div.tocify {
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="import.html">Import</a>
-    </li>
-    <li>
       <a href="quality.html">Quality</a>
     </li>
     <li>
       <a href="normalization.html">Normalization</a>
     </li>
     <li>
-      <a href="feature.html">Feature</a>
+      <a href="integration.html">Integration</a>
     </li>
     <li>
-      <a href="integration.html">Integration</a>
+      <a href="feature.html">Feature</a>
     </li>
     <li>
       <a href="dimension.html">Dimensionality</a>
@@ -382,13 +379,22 @@ div.tocify {
       <a href="clustering.html">Clustering</a>
     </li>
     <li>
+      <a href="doublet.html">Doublet</a>
+    </li>
+    <li>
       <a href="markers.html">Markers</a>
     </li>
     <li>
       <a href="annotation.html">Annotation</a>
     </li>
     <li>
+      <a href="comparison.html">Comparison</a>
+    </li>
+    <li>
       <a href="trajectory.html">Trajectory</a>
+    </li>
+    <li>
+      <a href="reference.html">Reference</a>
     </li>
     <li>
       <a href="interactive.html">Interactive</a>
@@ -447,7 +453,7 @@ div.section {
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2019-09-16
+<strong>Last updated:</strong> 2019-10-08
 </p>
 <p>
 <strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 1
@@ -538,10 +544,10 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttreeb8e02f43d0f59df5b10afc5dc3c01c76d5a2f632targetblankb8e02f4a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/jma1991/heart/tree/b8e02f43d0f59df5b10afc5dc3c01c76d5a2f632" target="_blank">b8e02f4</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree0014520099ada9880ea37cd4160c2c140c5e0874targetblank0014520a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/jma1991/heart/tree/0014520099ada9880ea37cd4160c2c140c5e0874" target="_blank">0014520</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttreeb8e02f43d0f59df5b10afc5dc3c01c76d5a2f632targetblankb8e02f4a" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree0014520099ada9880ea37cd4160c2c140c5e0874targetblank0014520a" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -559,26 +565,23 @@ Ignored files:
     Ignored:    shiny/
 
 Untracked files:
-    Untracked:  analysis/doublet.Rmd
-    Untracked:  markers.csv
+    Untracked:  analysis/comparison.Rmd
+    Untracked:  docs/figure/doublet.Rmd/
+    Untracked:  palette.csv
 
 Unstaged changes:
-    Deleted:    CITATION
-    Deleted:    LICENSE
+    Modified:   analysis/_site.yml
     Modified:   analysis/annotation.Rmd
+    Deleted:    analysis/atlas.Rmd
     Modified:   analysis/clustering.Rmd
     Modified:   analysis/dimension.Rmd
+    Modified:   analysis/doublet.Rmd
     Modified:   analysis/feature.Rmd
-    Modified:   analysis/index.Rmd
+    Deleted:    analysis/import.Rmd
     Modified:   analysis/integration.Rmd
-    Modified:   analysis/interactive.Rmd
     Modified:   analysis/markers.Rmd
-    Modified:   analysis/normalization.Rmd
     Modified:   analysis/quality.Rmd
     Modified:   analysis/trajectory.Rmd
-    Deleted:    code/elbow.R
-    Deleted:    code/script.R
-    Deleted:    code/theme.R
 
 </code></pre>
 <p>
@@ -617,6 +620,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/jma1991/heart/c7a1b2e3677b22f11bb7b7974e29e7da6fb9cf23/docs/annotation.html" target="_blank">c7a1b2e</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-16
+</td>
+<td>
+Build site
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/jma1991/heart/blob/e55b5b178c9964eaf008d13621a80ea24b780f17/analysis/annotation.Rmd" target="_blank">e55b5b1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-16
+</td>
+<td>
+Build site
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -681,7 +718,7 @@ Build site.
   scater
 )</code></pre>
 <p>Import experiment data:</p>
-<pre class="r"><code>sce &lt;- readr::read_rds(here::here(&quot;data/markers.rds&quot;))</code></pre>
+<pre class="r"><code>sce &lt;- readr::read_rds(here::here(&quot;data/markers.Rds&quot;))</code></pre>
 </div>
 <div id="annotation" class="section level2">
 <h2>Annotation</h2>
@@ -692,14 +729,17 @@ Build site.
 <div id="pca" class="section level4">
 <h4>PCA</h4>
 <pre class="r"><code>plotPCA(sce, colour_by = &quot;manual_celltype&quot;)</code></pre>
+<p><img src="figure/annotation.Rmd/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
 <div id="t-sne" class="section level4">
 <h4>t-SNE</h4>
 <pre class="r"><code>plotTSNE(sce, colour_by = &quot;manual_celltype&quot;)</code></pre>
+<p><img src="figure/annotation.Rmd/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
 <div id="umap" class="section level4">
 <h4>UMAP</h4>
 <pre class="r"><code>plotUMAP(sce, colour_by = &quot;manual_celltype&quot;)</code></pre>
+<p><img src="figure/annotation.Rmd/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="automatic" class="section level3 tabset">
@@ -750,6 +790,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/jma1991/heart/blob/c7a1b2e3677b22f11bb7b7974e29e7da6fb9cf23/docs/figure/annotation.Rmd/unnamed-chunk-7-1.png" target="_blank">c7a1b2e</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-16
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/jma1991/heart/blob/5231250f17f2ccf838154b30d1c781f001fd36c8/docs/figure/annotation.Rmd/unnamed-chunk-7-1.png" target="_blank">5231250</a>
 </td>
 <td>
@@ -790,6 +841,17 @@ Date
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/c7a1b2e3677b22f11bb7b7974e29e7da6fb9cf23/docs/figure/annotation.Rmd/unnamed-chunk-8-1.png" target="_blank">c7a1b2e</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-16
+</td>
+</tr>
 <tr>
 <td>
 <a href="https://github.com/jma1991/heart/blob/5231250f17f2ccf838154b30d1c781f001fd36c8/docs/figure/annotation.Rmd/unnamed-chunk-8-1.png" target="_blank">5231250</a>
@@ -834,6 +896,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/jma1991/heart/blob/c7a1b2e3677b22f11bb7b7974e29e7da6fb9cf23/docs/figure/annotation.Rmd/unnamed-chunk-9-1.png" target="_blank">c7a1b2e</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-16
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/jma1991/heart/blob/5231250f17f2ccf838154b30d1c781f001fd36c8/docs/figure/annotation.Rmd/unnamed-chunk-9-1.png" target="_blank">5231250</a>
 </td>
 <td>
@@ -871,7 +944,7 @@ James Ashmore
  collate  en_GB.UTF-8                 
  ctype    en_GB.UTF-8                 
  tz       Europe/London               
- date     2019-09-16                  
+ date     2019-10-08                  
 
 ─ Packages ──────────────────────────────────────────────────────────────
  package              * version   date       lib
@@ -881,9 +954,9 @@ James Ashmore
  beeswarm               0.2.3     2016-04-25 [1]
  Biobase              * 2.45.1    2019-09-04 [1]
  BiocGenerics         * 0.31.5    2019-07-03 [1]
- BiocNeighbors          1.3.4     2019-09-14 [1]
+ BiocNeighbors          1.3.5     2019-09-15 [1]
  BiocParallel         * 1.19.2    2019-08-07 [1]
- BiocSingular           1.1.5     2019-07-07 [1]
+ BiocSingular           1.1.7     2019-09-17 [1]
  bitops                 1.0-6     2013-08-17 [1]
  callr                  3.3.1     2019-07-18 [1]
  cellassign           * 0.99.11   2019-09-16 [1]
@@ -898,7 +971,7 @@ James Ashmore
  devtools               2.2.0     2019-09-07 [1]
  digest                 0.6.20    2019-07-04 [1]
  dplyr                  0.8.3     2019-07-04 [1]
- DT                     0.8       2019-08-07 [1]
+ DT                     0.9       2019-09-17 [1]
  ellipsis               0.2.0.1   2019-07-02 [1]
  evaluate               0.14      2019-05-28 [1]
  fs                     1.3.1     2019-05-06 [1]
@@ -918,7 +991,7 @@ James Ashmore
  IRanges              * 2.19.16   2019-09-13 [1]
  irlba                  2.3.3     2019-02-05 [1]
  jsonlite               1.6       2018-12-07 [1]
- knitr                  1.24      2019-08-08 [1]
+ knitr                  1.25      2019-09-18 [1]
  labeling               0.3       2014-08-23 [1]
  lattice                0.20-38   2018-11-04 [1]
  lazyeval               0.2.2     2019-03-15 [1]
@@ -950,7 +1023,7 @@ James Ashmore
  rsvd                   1.0.2     2019-07-29 [1]
  S4Vectors            * 0.23.23   2019-09-13 [1]
  scales                 1.0.0     2018-08-09 [1]
- scater               * 1.13.18   2019-08-30 [1]
+ scater               * 1.13.20   2019-09-17 [1]
  sessioninfo            1.1.1     2018-11-05 [1]
  SingleCellExperiment * 1.7.9     2019-09-12 [1]
  stringi                1.4.3     2019-03-12 [1]
@@ -998,27 +1071,27 @@ James Ashmore
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
+ CRAN (R 3.6.1)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ Bioconductor                           
+ Bioconductor                           
+ Bioconductor                           
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
+ CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
  Bioconductor                           
- Bioconductor                           
- Bioconductor                           
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- Bioconductor                           
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
- CRAN (R 3.6.0)                         
+ CRAN (R 3.6.1)                         
  CRAN (R 3.6.0)                         
  CRAN (R 3.6.1)                         
  CRAN (R 3.6.0)                         

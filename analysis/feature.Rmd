@@ -43,9 +43,9 @@ pacman::p_load(
 Read object from file:
 
 ```{r}
-sce <- read_rds(here::here("data/normalization.Rds"))
+sce <- read_rds(here::here("data/integration.Rds"))
 
-spk <- grepl("ERCC", rownames(sce))
+spk <- grepl("^ERCC-", rownames(sce))
 
 sce <- splitAltExps(sce, ifelse(spk, "ERCC", "gene"))
 ```
@@ -59,48 +59,74 @@ Fit a mean-dependent trend to the gene-specific variances:
 #### Genes
 
 ```{r}
-fit <- modelGeneVar(sce)
+fit <- modelGeneVar(sce, block = sce$phase)
 
-dat <- as.data.frame(fit)
+lvl <- levels(sce$phase)
 
-ggplot(dat, aes(mean, total)) +
-  geom_point(colour = "grey") +
-  geom_line(aes(y = tech)) +
-  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
-  theme_minimal()
+plt <- lapply(lvl, function(x) {
+  
+  dat <- as.data.frame(fit$per.block[[x]])
+  
+  ggplot(dat, aes(mean, total)) +
+    geom_point(colour = "grey") +
+    geom_line(aes(y = tech)) +
+    labs(title = x, x = "Mean of log-expression", y = "Variance of log-expression") +
+    theme_minimal()
+
+})
+
+patchwork::wrap_plots(plt, ncol = 2, nrow = 2)
 ```
 
 #### Spikes
 
 ```{r}
-fit <- modelGeneVarWithSpikes(sce, "ERCC")
+fit <- modelGeneVarWithSpikes(sce, "ERCC", block = sce$phase)
 
-alt <- metadata(fit)
+lvl <- levels(sce$phase)
 
-df1 <- as.data.frame(fit)
+plt <- lapply(lvl, function(x) {
+  
+  tbl <- fit$per.block[[x]]
+  
+  alt <- metadata(tbl)
+  
+  df1 <- as.data.frame(tbl)
+  
+  df2 <- data.frame(mean = alt$mean, total = alt$var)
+  
+  ggplot(df1, aes(mean, total)) +
+    geom_point(colour = "grey") +
+    geom_line(aes(mean, tech)) +
+    geom_point(data = df2, aes(mean, total), colour = "red") +
+    labs(title = x, x = "Mean of log-expression", y = "Variance of log-expression") +
+    theme_minimal()
 
-df2 <- data.frame(mean = alt$mean, total = alt$var)
+})
 
-ggplot(df1, aes(mean, total)) +
-  geom_point(colour = "grey") +
-  geom_line(aes(mean, tech)) +
-  geom_point(data = df2, aes(mean, total), colour = "red") +
-  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
-  theme_minimal()
+patchwork::wrap_plots(plt, ncol = 2, nrow = 2)
 ```
 
 #### Poisson
 
 ```{r}
-fit <- modelGeneVarByPoisson(sce)
+fit <- modelGeneVarByPoisson(sce, block = sce$phase)
 
-dat <- as.data.frame(fit)
+lvl <- levels(sce$phase)
 
-ggplot(dat, aes(mean, total)) +
-  geom_point(colour = "grey") +
-  geom_line(aes(mean, tech)) +
-  labs(x = "Mean of log-expression", y = "Variance of log-expression") +
-  theme_minimal()
+plt <- lapply(lvl, function(x) {
+  
+  dat <- as.data.frame(fit$per.block[[x]])
+  
+  ggplot(dat, aes(mean, total)) +
+    geom_point(colour = "grey") +
+    geom_line(aes(y = tech)) +
+    labs(title = x, x = "Mean of log-expression", y = "Variance of log-expression") +
+    theme_minimal()
+
+})
+
+patchwork::wrap_plots(plt, ncol = 2, nrow = 2)
 ```
 
 ### Coefficient of variation {.tabset}
@@ -110,36 +136,54 @@ Model the technical coefficient of variation as a function of the mean, and dete
 #### Genes
 
 ```{r}
-fit <- modelGeneCV2(sce)
+fit <- modelGeneCV2(sce, block = sce$phase)
 
-dat <- as.data.frame(fit)
+lvl <- levels(sce$phase)
 
-ggplot(dat, aes(mean, total)) +
-  geom_point(colour = "grey") +
-  geom_line(aes(mean, trend)) +
-  scale_x_log10(name = "Mean of expression", labels = comma) +
-  scale_y_log10(name = "Coefficient of variation", labels = comma) +
-  theme_minimal()
+plt <- lapply(lvl, function(x) {
+  
+  dat <- as.data.frame(fit$per.block[[x]])
+  
+  ggplot(dat, aes(mean, total)) +
+    geom_point(colour = "grey") +
+    geom_line(aes(mean, trend)) +
+    scale_x_log10(name = "Mean of expression", labels = comma) +
+    scale_y_log10(name = "Coefficient of variation", labels = comma) +
+    theme_minimal()
+
+})
+
+patchwork::wrap_plots(plt, ncol = 2, nrow = 2)
 ```
 
 #### Spikes
 
 ```{r}
-fit <- modelGeneCV2WithSpikes(sce, "ERCC")
+fit <- modelGeneCV2WithSpikes(sce, "ERCC", block = sce$phase)
 
-alt <- metadata(fit)
+lvl <- levels(sce$phase)
 
-df1 <- as.data.frame(fit)
+plt <- lapply(lvl, function(x) {
 
-df2 <- data.frame(mean = alt$mean, total = alt$cv2)
+  tbl <- fit$per.block[[x]]
+  
+  alt <- metadata(tbl)
+  
+  df1 <- as.data.frame(tbl)
+  
+  df2 <- data.frame(mean = alt$mean, total = alt$cv2)
+  
+  ggplot(df1, aes(mean, total)) +
+    geom_point(colour = "grey") +
+    geom_line(aes(mean, trend)) +
+    geom_point(data = df2, aes(mean, total), colour = "red") +
+    scale_x_log10(name = "Mean of expression", labels = comma) +
+    scale_y_log10(name = "Coefficient of variation", labels = comma) +
+    theme_minimal()
 
-ggplot(df1, aes(mean, total)) +
-  geom_point(colour = "grey") +
-  geom_point(data = df2, mapping = aes(mean, total), colour = "red") +
-  geom_line(aes(mean, trend)) +
-  scale_x_log10(name = "Mean of expression", labels = comma) +
-  scale_y_log10(name = "Coefficient of variation", labels = comma) +
-  theme_minimal()
+})
+
+patchwork::wrap_plots(plt, ncol = 2, nrow = 2)
 ```
 
 ### Dropout rate
@@ -172,7 +216,7 @@ ggplot(dat, aes(mean, rate)) +
 Model the per-gene variance:
 
 ```{r}
-fit <- modelGeneVar(sce)
+fit <- modelGeneVar(sce, block = sce$phase)
 
 sig <- subset(fit, bio > 0)
 
@@ -188,15 +232,15 @@ metadata(sce)$modelGeneVar <- sel
 Plot heatmap of gene expression values:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$modelGeneVar, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
+plotHeatmap(sce, metadata(sce)$modelGeneVar, exprs_values = "corrected", center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### Correlated genes
 
 ```{r}
-fit <- correlatePairs(sce, subset.row = metadata(sce)$modelGeneVar)
+fit <- correlatePairs(sce, block = sce$phase, subset.row = metadata(sce)$modelGeneVar)
 
-sig <- subset(fit, rho >= 0.5 | rho <= 0.5)
+sig <- subset(fit, abs(rho) >= 0.5)
 
 sel <- union(sig$gene1, sig$gene2)
 
@@ -206,15 +250,13 @@ metadata(sce)$correlatePairs <- sel
 Plot heatmap of correlated gene expression values:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$correlatePairs, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
+plotHeatmap(sce, metadata(sce)$correlatePairs, exprs_values = "corrected", center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High coefficient of variation {.tabset}
 
 ```{r}
-fit <- modelGeneCV2(sce)
-
-fit$FDR <- p.adjust(fit$p.value, method = "fdr")
+fit <- modelGeneCV2(sce, block = sce$phase)
 
 sig <- subset(fit, ratio > 1)
 
@@ -230,7 +272,7 @@ metadata(sce)$modelGeneCV2 <- sel
 Plot heatmap of genes:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$modelGeneCV2, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
+plotHeatmap(sce, metadata(sce)$modelGeneCV2, exprs_values = "corrected", center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High loading genes {.tabset}
@@ -238,7 +280,7 @@ plotHeatmap(sce, metadata(sce)$modelGeneCV2, center = TRUE, zlim = c(-1, 1), sym
 Use principal components analysis to identify high loading genes:
 
 ```{r}
-mat <- logcounts(sce)
+mat <- assay(sce, "corrected")
 
 pca <- calculatePCA(t(mat))
 
@@ -264,7 +306,7 @@ metadata(sce)$findElbowPoint <- sel
 Plot heatmap of high loading genes:
 
 ```{r}
-plotHeatmap(sce, metadata(sce)$findElbowPoint, center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
+plotHeatmap(sce, metadata(sce)$findElbowPoint, exprs_values = "corrected", center = TRUE, zlim = c(-1, 1), symmetric = TRUE, show_colnames = FALSE)
 ```
 
 ### High dropout genes {.tabset}

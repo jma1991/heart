@@ -1,0 +1,390 @@
+---
+title: "Sample comparison"
+author: "James Ashmore"
+date: "2019-10-07"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+```{r}
+
+```
+
+## Setup
+
+```{r}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/comparison",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+```{r}
+pacman::p_load(broom, edgeR, scater, scran)
+```
+
+```{r, include = FALSE}
+DT::datatable(matrix())
+```
+
+```{r}
+sce <- readr::read_rds(here::here("data/annotation.Rds"))
+```
+
+## Differential expression
+
+In this section we are going to test for differential genotype expression within each cluster and celltype annotation. This experiment does not contain replicates so we cannot use something like edgeR to perform the differential testing. Instead, we will perform pairwise Welch t-tests between genotypes within each cluster or celltype annotation.
+
+### By cluster
+
+Perform pairwise Welch t-tests between cells with different genotypes within each cluster:
+
+```{r}
+fct <- levels(sce$cluster)
+
+res <- lapply(fct, function(x) {
+  
+  sel <- which(sce$cluster == x)
+  
+  mat <- logcounts(sce)
+  
+  fit <- pairwiseTTests(mat[, sel], sce$genotype[sel], block = sce$phase[sel])
+  
+  out <- fit$statistics[[1]]
+
+})
+
+sig <- lapply(res, subset, FDR < 0.1)
+
+sig <- Filter(nrow, sig)
+
+sig <- lapply(sig, function(x) data.frame(Top = order(x$FDR), x))
+
+names(sig) <- fct
+```
+
+#### Table {.tabset}
+
+```{r, results = "asis", echo = FALSE}
+
+for (n in names(sig)) {
+  
+  dat <- as.data.frame(sig[[n]])
+
+  cat("##### Cluster", n, "\n")
+
+  cat(knitr::knit_print(DT::datatable(dat)))
+
+  cat("\n\n")
+
+}
+
+```
+
+#### Heatmap {.tabset}
+
+Plot heatmap of gene expression values:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+  
+  dat <- sig[[n]]
+  
+  top <- subset(dat, Top <= 10)
+  
+  ids <- rownames(top)
+  
+  sel <- which(sce$cluster == n)
+  
+  cat("##### Cluster", n, "\n")
+  
+  plotHeatmap(
+    object = sce[, sel],
+    features = ids,
+    exprs_values = "corrected",
+    center = TRUE,
+    zlim = c(-5, 5),
+    colour_columns_by = "genotype",
+    cluster_rows = ifelse(length(ids) > 1, TRUE, FALSE),
+    show_colnames = FALSE)
+  
+  cat("\n\n")
+
+}
+
+```
+
+#### Dimension {.tabset}
+
+Plot UMAP reduced dimensions:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+
+  dat <- sig[[n]]
+
+  top <- subset(dat, Top <= 10)
+
+  ids <- rownames(top)
+
+  sel <- which(sce$cluster == n)
+
+  plt <- lapply(ids, function(x) plotUMAP(sce[, sel], colour_by = x, shape_by = "genotype", by_exprs_values = "corrected") + ggtitle(x))
+
+  cat("##### Cluster", n, "\n")
+
+  print(patchwork::wrap_plots(plt))
+
+  cat("\n\n")
+
+}
+
+```
+
+#### Expression {.tabset}
+
+Plot expression values for all cells:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+
+  dat <- sig[[n]]
+
+  top <- subset(dat, Top <= 10)
+
+  ids <- rownames(top)
+
+  sel <- which(sce$cluster == n)
+
+  plt <- plotExpression(
+    object = sce[, sel],
+    features = ids,
+    x = "genotype",
+    exprs_values = "corrected",
+    colour_by = "genotype",
+    scales = "free")
+
+  cat("##### Cluster", n, "\n")
+
+  print(plt)
+
+  cat("\n\n")
+
+}
+
+```
+
+### By celltype
+
+Perform pairwise Welch t-tests between cells with different genotypes within each celltype:
+
+```{r}
+fct <- levels(sce$cellassign_celltype)
+
+res <- lapply(fct, function(x) {
+  
+  sel <- which(sce$cellassign_celltype == x)
+  
+  mat <- logcounts(sce)
+  
+  fit <- pairwiseTTests(mat[, sel], sce$genotype[sel], block = sce$phase[sel])
+  
+  out <- fit$statistics[[1]]
+
+})
+
+sig <- lapply(res, subset, FDR < 0.1)
+
+sig <- Filter(nrow, sig)
+
+sig <- lapply(sig, function(x) data.frame(Top = order(x$FDR), x))
+
+names(sig) <- fct
+```
+
+#### Table {.tabset}
+
+```{r, results = "asis", echo = FALSE}
+
+for (n in names(sig)) {
+  
+  dat <- as.data.frame(sig[[n]])
+
+  cat("##### cellassign_celltype", n, "\n")
+
+  cat(knitr::knit_print(DT::datatable(dat)))
+
+  cat("\n\n")
+
+}
+
+```
+
+#### Heatmap {.tabset}
+
+Plot heatmap of gene expression values:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+  
+  dat <- sig[[n]]
+  
+  top <- subset(dat, Top <= 10)
+  
+  ids <- rownames(top)
+  
+  sel <- which(sce$cellassign_celltype == n)
+  
+  cat("##### cellassign_celltype", n, "\n")
+  
+  plotHeatmap(
+    object = sce[, sel],
+    features = ids,
+    exprs_values = "corrected",
+    center = TRUE,
+    zlim = c(-5, 5),
+    colour_columns_by = "genotype",
+    cellassign_celltype_rows = ifelse(length(ids) > 1, TRUE, FALSE),
+    show_colnames = FALSE)
+  
+  cat("\n\n")
+
+}
+
+```
+
+#### Dimension {.tabset}
+
+Plot UMAP reduced dimensions:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+
+  dat <- sig[[n]]
+
+  top <- subset(dat, Top <= 10)
+
+  ids <- rownames(top)
+
+  sel <- which(sce$cellassign_celltype == n)
+
+  plt <- lapply(ids, function(x) plotUMAP(sce[, sel], colour_by = x, shape_by = "genotype", by_exprs_values = "corrected") + ggtitle(x))
+
+  cat("##### cellassign_celltype", n, "\n")
+
+  print(patchwork::wrap_plots(plt))
+
+  cat("\n\n")
+
+}
+
+```
+
+#### Expression {.tabset}
+
+Plot expression values for all cells:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+
+for (n in names(sig)) {
+
+  dat <- sig[[n]]
+
+  top <- subset(dat, Top <= 10)
+
+  ids <- rownames(top)
+
+  sel <- which(sce$cellassign_celltype == n)
+
+  plt <- plotExpression(
+    object = sce[, sel],
+    features = ids,
+    x = "genotype",
+    exprs_values = "corrected",
+    colour_by = "genotype",
+    scales = "free")
+
+  cat("##### cellassign_celltype", n, "\n")
+
+  print(plt)
+
+  cat("\n\n")
+
+}
+
+```
+
+## Differential abundance
+
+In this section we are going to test for differential genotype abundance within each cluster and celltype annotation. This experiment does not contain replicates so we cannot use something like edgeR to perform the differential testing. Instead, we will use the binomial test which uses data to test whether a population proportion matches a null expectation for the population. In our case the null expectation is that Het and Hom cells have equal proportion within each cluster or celltype annotation.
+
+### By cluster
+
+Perform an exact binomial test across genotypes within each cluster:
+
+```{r}
+tbl <- table(sce$cluster, sce$genotype)
+
+knitr::knit_print(tbl)
+
+res <- apply(tbl, 1, binom.test, p = 0.5)
+
+lst <- lapply(res, tidy)
+
+dat <- do.call(rbind, lst)
+
+dat <- cbind(cluster = rownames(tbl), dat)
+
+knitr::knit_print(dat)
+```
+
+### By celltype
+
+Perform an exact binomial test across genotypes within each celltype:
+
+```{r}
+tbl <- table(sce$cellassign_celltype, sce$genotype)
+
+knitr::knit_print(tbl)
+
+res <- apply(tbl, 1, binom.test, p = 0.5)
+
+lst <- lapply(res, tidy)
+
+dat <- do.call(rbind, lst)
+
+dat <- cbind(cluster = rownames(tbl), dat)
+
+knitr::knit_print(dat)
+```
+
+## Summary
+
+### Output
+
+Write experiment data:
+
+```{r output}
+readr::write_rds(sce, here::here("data/comparison.Rds"))
+```
+
+### Session
+
+Print session information:
+
+```{r session}
+devtools::session_info()
+```

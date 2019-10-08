@@ -361,19 +361,16 @@ div.tocify {
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="import.html">Import</a>
-    </li>
-    <li>
       <a href="quality.html">Quality</a>
     </li>
     <li>
       <a href="normalization.html">Normalization</a>
     </li>
     <li>
-      <a href="feature.html">Feature</a>
+      <a href="integration.html">Integration</a>
     </li>
     <li>
-      <a href="integration.html">Integration</a>
+      <a href="feature.html">Feature</a>
     </li>
     <li>
       <a href="dimension.html">Dimensionality</a>
@@ -382,13 +379,22 @@ div.tocify {
       <a href="clustering.html">Clustering</a>
     </li>
     <li>
+      <a href="doublet.html">Doublet</a>
+    </li>
+    <li>
       <a href="markers.html">Markers</a>
     </li>
     <li>
       <a href="annotation.html">Annotation</a>
     </li>
     <li>
+      <a href="comparison.html">Comparison</a>
+    </li>
+    <li>
       <a href="trajectory.html">Trajectory</a>
+    </li>
+    <li>
+      <a href="reference.html">Reference</a>
     </li>
     <li>
       <a href="interactive.html">Interactive</a>
@@ -447,7 +453,7 @@ div.section {
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2019-09-19
+<strong>Last updated:</strong> 2019-10-08
 </p>
 <p>
 <strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 1
@@ -471,7 +477,7 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 </div>
 <div id="strongRMarkdownfilestronguncommittedchanges" class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown is untracked by Git. To know which version of the R Markdown file created these results, you’ll want to first commit it to the Git repo. If you’re still working on the analysis, you can ignore this warning. When you’re finished, you can run <code>wflow_publish</code> to commit the R Markdown file and build the HTML.</p>
+<p>The R Markdown file has unstaged changes. To know which version of the R Markdown file created these results, you’ll want to first commit it to the Git repo. If you’re still working on the analysis, you can ignore this warning. When you’re finished, you can run <code>wflow_publish</code> to commit the R Markdown file and build the HTML.</p>
 </div>
 </div>
 </div>
@@ -538,10 +544,10 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree4247c6e1eef2abf8f24d5cf060f8b0242858d617targetblank4247c6ea"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/jma1991/heart/tree/4247c6e1eef2abf8f24d5cf060f8b0242858d617" target="_blank">4247c6e</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree0014520099ada9880ea37cd4160c2c140c5e0874targetblank0014520a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/jma1991/heart/tree/0014520099ada9880ea37cd4160c2c140c5e0874" target="_blank">0014520</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree4247c6e1eef2abf8f24d5cf060f8b0242858d617targetblank4247c6ea" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomjma1991hearttree0014520099ada9880ea37cd4160c2c140c5e0874targetblank0014520a" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -553,15 +559,33 @@ Ignored files:
     Ignored:    .Rproj.user/
     Ignored:    analysis/.DS_Store
     Ignored:    analysis/cache/
+    Ignored:    analysis/figure/
     Ignored:    code/.DS_Store
     Ignored:    data/
     Ignored:    docs/.DS_Store
     Ignored:    shiny/
 
 Untracked files:
-    Untracked:  analysis/reference.Rmd
-    Untracked:  docs/figure/reference.Rmd/
+    Untracked:  analysis/comparison.Rmd
+    Untracked:  docs/figure/comparison.Rmd/
+    Untracked:  docs/figure/doublet.Rmd/
     Untracked:  palette.csv
+
+Unstaged changes:
+    Modified:   analysis/_site.yml
+    Modified:   analysis/annotation.Rmd
+    Deleted:    analysis/atlas.Rmd
+    Modified:   analysis/clustering.Rmd
+    Modified:   analysis/dimension.Rmd
+    Modified:   analysis/doublet.Rmd
+    Modified:   analysis/feature.Rmd
+    Deleted:    analysis/import.Rmd
+    Modified:   analysis/integration.Rmd
+    Modified:   analysis/interactive.Rmd
+    Modified:   analysis/markers.Rmd
+    Modified:   analysis/quality.Rmd
+    Modified:   analysis/reference.Rmd
+    Modified:   analysis/trajectory.Rmd
 
 </code></pre>
 <p>
@@ -574,9 +598,69 @@ Note that any generated files, e.g. HTML, png, CSS, etc., are not included in t
 <hr>
 </div>
 <div id="versions" class="tab-pane fade">
+
 <p>
-There are no past versions. Publish this analysis with <code>wflow_publish()</code> to start tracking its development.
+These are the previous versions of the R Markdown and HTML files. If you’ve configured a remote Git repository (see <code>?wflow_git_remote</code>), click on the hyperlinks in the table below to view them.
 </p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/jma1991/heart/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/reference.html" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+<td>
+Build site.
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/jma1991/heart/blob/d9dfa79f4f8316eb92bda23dbef2b99cc3d3769b/analysis/reference.Rmd" target="_blank">d9dfa79</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+<td>
+wflow_publish(“analysis/reference.Rmd”, dry_run = TRUE)
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 <hr>
 </div>
 </div>
@@ -594,17 +678,11 @@ There are no past versions. Publish this analysis with <code>wflow_publish()</co
   warning    = FALSE
 )</code></pre>
 <p>Load required packages:</p>
-<pre class="r"><code>pacman::p_load(batchelor, ggalluvial, here, pheatmap, readr, scater, scran, scmap, viridis)</code></pre>
+<pre class="r"><code>pacman::p_load(batchelor, ggalluvial, here, readr, scater, scran, scmap)</code></pre>
 <p>Read experiment data:</p>
 <pre class="r"><code>sce &lt;- read_rds(here(&quot;data/trajectory.Rds&quot;))</code></pre>
 <p>Select samples from genotype Het:</p>
-<pre class="r"><code>sce &lt;- sce[, sce$genotype == &quot;Het&quot;]</code></pre>
-<p>Import colour palette for cell types:</p>
-<pre class="r"><code>pal &lt;- read_csv(here(&quot;palette.csv&quot;))
-
-col &lt;- pal$colour
-
-names(col) &lt;- pal$celltype</code></pre>
+<pre class="r"><code>tmp &lt;- sce[, sce$genotype == &quot;Het&quot;]</code></pre>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>
@@ -614,6 +692,8 @@ names(col) &lt;- pal$celltype</code></pre>
 <pre class="r"><code>BiocManager::install(&quot;MouseGastrulationData&quot;)</code></pre>
 <p>Load the MouseGastrulationData package:</p>
 <pre class="r"><code>pacman::p_load(MouseGastrulationData)</code></pre>
+<p>Modify colour palette to include unassigned cells:</p>
+<pre class="r"><code>EmbryoCelltypeColours &lt;- c(EmbryoCelltypeColours, &quot;unassigned&quot; = &quot;#999999&quot;, &quot;unknown&quot; = &quot;#999999&quot;)</code></pre>
 </div>
 <div id="selection" class="section level3">
 <h3>Selection</h3>
@@ -639,19 +719,93 @@ ref &lt;- ref[, !nan]</code></pre>
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_colour_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()</code></pre>
 <p><img src="figure/reference.Rmd/unnamed-chunk-11-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-11-1">
+Past versions of unnamed-chunk-11-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-11-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-11-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <p>Inspect UMAP coloured by cell type:</p>
 <pre class="r"><code>plt &lt;- plotUMAP(ref, colour_by = &quot;celltype&quot;)
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_colour_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()</code></pre>
 <p><img src="figure/reference.Rmd/unnamed-chunk-12-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-12-1">
+Past versions of unnamed-chunk-12-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-12-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-12-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 <div id="projection" class="section level2">
@@ -659,38 +813,29 @@ ggplot(plt$data, aes(X, Y, colour = colour_by)) +
 <div id="by-cluster" class="section level3">
 <h3>By cluster</h3>
 <p>Create feature_symbol column required by scmap package:</p>
-<pre class="r"><code>rowData(sce)$feature_symbol &lt;- uniquifyFeatureNames(rowData(sce)$gene_id, rowData(sce)$gene_name)
+<pre class="r"><code>rowData(tmp)$feature_symbol &lt;- uniquifyFeatureNames(rowData(tmp)$gene_id, rowData(tmp)$gene_name)
 
-rownames(sce) &lt;- rowData(sce)$feature_symbol
+rownames(tmp) &lt;- rowData(tmp)$feature_symbol
 
 rowData(ref)$feature_symbol &lt;- uniquifyFeatureNames(rowData(ref)$ENSEMBL, rowData(ref)$SYMBOL)
 
 rownames(ref) &lt;- rowData(ref)$feature_symbol</code></pre>
 <p>Subset both datasets to common universe of genes:</p>
-<pre class="r"><code>ids &lt;- intersect(rownames(sce), rownames(ref))
+<pre class="r"><code>ids &lt;- intersect(rownames(tmp), rownames(ref))
 
-sce &lt;- sce[ids, ]
+tmp &lt;- tmp[ids, ]
 
 ref &lt;- ref[ids, ]</code></pre>
 <p>Select most informative features from the reference dataset:</p>
 <pre class="r"><code>ref &lt;- selectFeatures(ref, n_features = 2000)</code></pre>
 <p>Create a cluster index based on celltype:</p>
 <pre class="r"><code>ref &lt;- indexCluster(ref, cluster_col = &quot;celltype&quot;)</code></pre>
-<p>Inspect the cell type index:</p>
-<pre class="r"><code>idx &lt;- metadata(ref)$scmap_cluster_index
-
-mat &lt;- as.matrix(idx)
-
-brk &lt;- seq(0, max(mat), length.out = 101)
-
-pheatmap(mat, color = viridis(100), breaks = brk, scale = &quot;row&quot;)</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-17-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Project our dataset to the reference dataset:</p>
-<pre class="r"><code>fit &lt;- scmapCluster(projection = sce, index_list = list(reference = metadata(ref)$scmap_cluster_index))
+<pre class="r"><code>fit &lt;- scmapCluster(projection = tmp, index_list = list(reference = metadata(ref)$scmap_cluster_index))
 
-sce$scmap_cluster_labs &lt;- fit$scmap_cluster_labs[, &quot;reference&quot;]</code></pre>
+tmp$scmap_cluster_labs &lt;- fit$scmap_cluster_labs[, &quot;reference&quot;]</code></pre>
 <p>Plot the assignment of projected cell types:</p>
-<pre class="r"><code>dat &lt;- data.frame(cluster = sce$cluster, celltype = sce$scmap_cluster_labs)
+<pre class="r"><code>dat &lt;- data.frame(cluster = tmp$cluster, celltype = tmp$scmap_cluster_labs)
 
 dat &lt;- plyr::count(dat, vars = c(&quot;cluster&quot;, &quot;celltype&quot;))
 
@@ -699,18 +844,59 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = &quot;stratum&quot;, label.strata = TRUE) +
   scale_x_discrete(limits = c(&quot;Cluster&quot;, &quot;Cell type&quot;), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_fill_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   theme_minimal()</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-19-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/reference.Rmd/unnamed-chunk-18-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Inspect the UMAP coordinates coloured by projected cell type:</p>
-<pre class="r"><code>plt &lt;- plotUMAP(sce, colour_by = &quot;scmap_cluster_labs&quot;)
+<pre class="r"><code>plt &lt;- plotUMAP(tmp, colour_by = &quot;scmap_cluster_labs&quot;)
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_colour_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-20-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/reference.Rmd/unnamed-chunk-19-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-19-1">
+Past versions of unnamed-chunk-19-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-19-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-19-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Save projected cell types to unmodified experiment data:</p>
+<pre class="r"><code>sce$scmapCluster_celltype &lt;- NA
+
+sce$scmapCluster_celltype[sce$genotype == &quot;Het&quot;] &lt;- tmp$scmap_cluster_labs</code></pre>
 </div>
 <div id="by-cell" class="section level3">
 <h3>By cell</h3>
@@ -719,15 +905,15 @@ ggplot(plt$data, aes(X, Y, colour = colour_by)) +
 
 ref &lt;- indexCell(ref)</code></pre>
 <p>Project our dataset to the reference dataset:</p>
-<pre class="r"><code>num &lt;- round(sqrt(length(unique(ref$celltype))))
+<pre class="r"><code>num &lt;- round(sqrt(ncol(ref)))
 
-fit &lt;- scmapCell(projection = sce, index_list = list(reference = metadata(ref)$scmap_cell_index), w = num)
+fit &lt;- scmapCell(projection = tmp, index_list = list(reference = metadata(ref)$scmap_cell_index), w = num)
 
 lab &lt;- apply(fit$reference$cells, 2, function(x) names(which.max(table(ref$celltype[x]))))
 
-sce$scmap_cell_labs &lt;- lab</code></pre>
+tmp$scmap_cell_labs &lt;- lab</code></pre>
 <p>Plot the assignment of projected cell types:</p>
-<pre class="r"><code>dat &lt;- data.frame(cluster = sce$cluster, celltype = sce$scmap_cell_labs)
+<pre class="r"><code>dat &lt;- data.frame(cluster = tmp$cluster, celltype = tmp$scmap_cell_labs)
 
 dat &lt;- plyr::count(dat, vars = c(&quot;cluster&quot;, &quot;celltype&quot;))
 
@@ -736,18 +922,96 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = &quot;stratum&quot;, label.strata = TRUE) +
   scale_x_discrete(limits = c(&quot;Cluster&quot;, &quot;Cell type&quot;), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_fill_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   theme_minimal()</code></pre>
 <p><img src="figure/reference.Rmd/unnamed-chunk-23-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-23-1">
+Past versions of unnamed-chunk-23-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-23-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-23-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <p>Inspect the UMAP coordinates coloured by projected cell type:</p>
-<pre class="r"><code>plt &lt;- plotUMAP(sce, colour_by = &quot;scmap_cell_labs&quot;)
+<pre class="r"><code>plt &lt;- plotUMAP(tmp, colour_by = &quot;scmap_cell_labs&quot;)
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_colour_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()</code></pre>
 <p><img src="figure/reference.Rmd/unnamed-chunk-24-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-24-1">
+Past versions of unnamed-chunk-24-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-24-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-24-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Save projected cell types to unmodified experiment data:</p>
+<pre class="r"><code>sce$scmapCell_celltype &lt;- NA
+
+sce$scmapCell_celltype[sce$genotype == &quot;Het&quot;] &lt;- tmp$scmap_cell_labs</code></pre>
 </div>
 </div>
 <div id="neighbors" class="section level2">
@@ -755,39 +1019,37 @@ ggplot(plt$data, aes(X, Y, colour = colour_by)) +
 <p>Clear spike-in information across batches:</p>
 <pre class="r"><code>ref &lt;- clearSpikes(ref)
 
-sce &lt;- clearSpikes(sce)</code></pre>
+tmp &lt;- clearSpikes(tmp)</code></pre>
 <p>Select genes with positive average biological components:</p>
 <pre class="r"><code>mod &lt;- model.matrix(~ pool + sample, data = colData(ref))
 
-dec &lt;- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(sce))
+dec &lt;- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(tmp, block = tmp$phase))
 
 hvg &lt;- rownames(dec)[dec$bio &gt; 0]</code></pre>
 <p>Correct for batch effects using a fast version of the MNN method:</p>
-<pre class="r"><code>mnn &lt;- fastMNN(ref, sce, pc.input = TRUE, subset.row = hvg)
+<pre class="r"><code>mnn &lt;- fastMNN(ref, tmp, pc.input = TRUE, subset.row = hvg)
 
-reducedDimNames(mnn) &lt;- &quot;MNN&quot;</code></pre>
-<p>Add metadata to the combined dataset:</p>
-<pre class="r"><code>mnn$celltype &lt;- c(ref$celltype, rep(&quot;unknown&quot;, ncol(sce)))
+reducedDimNames(mnn) &lt;- &quot;MNN&quot;
 
-mnn$pool &lt;- c(ref$pool, rep(&quot;unknown&quot;, ncol(sce)))
+mnn$batch &lt;- ifelse(mnn$batch == 1, &quot;Marioni&quot;, &quot;Wilson&quot;)</code></pre>
+<p>Identify kNN from reference cells:</p>
+<pre class="r"><code>sbj &lt;- reducedDim(mnn, &quot;MNN&quot;)[mnn$batch == &quot;Marioni&quot;, ]
 
-mnn$sample &lt;- c(ref$sample, rep(&quot;unknown&quot;, ncol(sce)))</code></pre>
-<p>Annotate experiment cells using kNN coordinates from reference cells:</p>
-<pre class="r"><code>sbj &lt;- reducedDim(mnn, &quot;MNN&quot;)[mnn$batch == 1, ]
+qry &lt;- reducedDim(mnn, &quot;MNN&quot;)[mnn$batch == &quot;Wilson&quot;, ]
 
-qry &lt;- reducedDim(mnn, &quot;MNN&quot;)[mnn$batch == 2, ]
+num &lt;- round(sqrt(ncol(ref)))
 
-num &lt;- round(sqrt(length(unique(ref$celltype))))
-
-knn &lt;- BiocNeighbors::queryKNN(sbj, qry, k = num)
+knn &lt;- BiocNeighbors::queryKNN(sbj, qry, k = num)</code></pre>
+<p>Annotate cell type using kNN cells:</p>
+<pre class="r"><code>mnn$celltype &lt;- c(ref$celltype, rep(NA, ncol(tmp)))
 
 lab &lt;- apply(knn$index, 1, function(x) names(which.max(table(ref$celltype[x]))))
 
-mnn$celltype[mnn$batch == 2] &lt;- lab
+mnn$celltype[mnn$batch == &quot;Wilson&quot;] &lt;- lab
 
-sce$mnn_cell_labs &lt;- lab</code></pre>
+tmp$mnn_celltype &lt;- lab</code></pre>
 <p>Plot the assignment of projected cell types:</p>
-<pre class="r"><code>dat &lt;- data.frame(cluster = sce$cluster, celltype = sce$mnn_cell_labs)
+<pre class="r"><code>dat &lt;- data.frame(cluster = tmp$cluster, celltype = tmp$mnn_celltype)
 
 dat &lt;- plyr::count(dat, vars = c(&quot;cluster&quot;, &quot;celltype&quot;))
 
@@ -796,18 +1058,55 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = &quot;stratum&quot;, label.strata = TRUE) +
   scale_x_discrete(limits = c(&quot;Cluster&quot;, &quot;Cell type&quot;), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_fill_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   theme_minimal()</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-30-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/reference.Rmd/unnamed-chunk-31-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-31-1">
+Past versions of unnamed-chunk-31-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-31-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/jma1991/heart/blob/2dfefc16877d1318c99ede5ed9d551c05bc4c0de/docs/figure/reference.Rmd/unnamed-chunk-31-1.png" target="_blank">2dfefc1</a>
+</td>
+<td>
+James Ashmore
+</td>
+<td>
+2019-09-19
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <p>Plot UMAP of experiment data coloured by cell type annotation:</p>
-<pre class="r"><code>plt &lt;- plotUMAP(sce, colour_by = &quot;mnn_cell_labs&quot;)
+<pre class="r"><code>plt &lt;- plotUMAP(tmp, colour_by = &quot;mnn_celltype&quot;)
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = &quot;Cell type&quot;, values = col) +
+  scale_colour_manual(name = &quot;Cell type&quot;, values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-31-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/reference.Rmd/unnamed-chunk-32-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Perform UMAP on the PCA data from the combined dataset:</p>
 <pre class="r"><code>set.seed(1701)
 
@@ -815,20 +1114,24 @@ mnn &lt;- runUMAP(mnn, dimred = &quot;MNN&quot;)</code></pre>
 <p>Plot UMAP of combined dataset:</p>
 <pre class="r"><code>plt &lt;- plotUMAP(mnn, colour_by = &quot;celltype&quot;, shape_by = &quot;batch&quot;)
 
-ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
+ggplot(subset(plt$data, shape_by == &quot;Marioni&quot;), aes(X, Y, colour = colour_by)) +
   geom_point(alpha = 0.5, size = 0.5) +
-  scale_colour_manual(values = col) +
+  scale_colour_manual(values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
-  geom_point(data = subset(plt$data, shape_by == 2), aes(X, Y), colour = &quot;black&quot;, shape = 4) +
+  geom_point(data = subset(plt$data, shape_by == &quot;Wilson&quot;), aes(X, Y), colour = &quot;black&quot;, shape = 4) +
   theme_void()</code></pre>
-<p><img src="figure/reference.Rmd/unnamed-chunk-33-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p><img src="figure/reference.Rmd/unnamed-chunk-34-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p>Save projected celltype to unmodified experiment data:</p>
+<pre class="r"><code>sce$fastMNN_celltype &lt;- NA
+
+sce$fastMNN_celltype[sce$genotype == &quot;Het&quot;] &lt;- tmp$mnn_celltype</code></pre>
 </div>
 <div id="summary" class="section level2">
 <h2>Summary</h2>
 <div id="output" class="section level3">
 <h3>Output</h3>
-<p>Write combined dataset:</p>
-<pre class="r"><code>write_rds(mnn, here(&quot;data/reference.Rds&quot;))</code></pre>
+<p>Write experiment data:</p>
+<pre class="r"><code>write_rds(sce, here(&quot;data/reference.Rds&quot;))</code></pre>
 </div>
 <div id="session" class="section level3">
 <h3>Session</h3>
@@ -844,7 +1147,7 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  collate  en_GB.UTF-8                 
  ctype    en_GB.UTF-8                 
  tz       Europe/London               
- date     2019-09-19                  
+ date     2019-10-08                  
 
 ─ Packages ──────────────────────────────────────────────────────────────
  package                * version   date       lib
@@ -926,7 +1229,7 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  mime                     0.7       2019-06-11 [1]
  MouseGastrulationData  * 0.99.12   2019-08-29 [1]
  munsell                  0.5.0     2018-06-12 [1]
- pheatmap               * 1.0.12    2019-01-04 [1]
+ pacman                   0.5.1     2019-03-11 [1]
  pillar                   1.4.2     2019-06-29 [1]
  pkgbuild                 1.0.5     2019-08-26 [1]
  pkgconfig                2.0.2     2018-08-16 [1]
@@ -941,7 +1244,6 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  R6                       2.4.0     2019-02-14 [1]
  randomForest             4.6-14    2018-03-25 [1]
  rappdirs                 0.3.1     2016-03-28 [1]
- RColorBrewer             1.1-2     2014-12-07 [1]
  Rcpp                     1.0.2     2019-07-25 [1]
  RcppAnnoy                0.0.12    2019-05-12 [1]
  RcppParallel             4.4.3     2019-05-22 [1]
@@ -954,7 +1256,6 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  rprojroot                1.3-2     2018-01-03 [1]
  RSpectra                 0.15-0    2019-06-11 [1]
  RSQLite                  2.1.2     2019-07-24 [1]
- rstudioapi               0.10      2019-03-19 [1]
  rsvd                     1.0.2     2019-07-29 [1]
  S4Vectors              * 0.23.23   2019-09-13 [1]
  scales                   1.0.0     2018-08-09 [1]
@@ -976,8 +1277,9 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  uwot                     0.1.3     2019-04-07 [1]
  vctrs                    0.2.0     2019-07-05 [1]
  vipor                    0.4.5     2017-03-22 [1]
- viridis                * 0.5.1     2018-03-29 [1]
- viridisLite            * 0.3.0     2018-02-01 [1]
+ viridis                  0.5.1     2018-03-29 [1]
+ viridisLite              0.3.0     2018-02-01 [1]
+ whisker                  0.4       2019-08-28 [1]
  withr                    2.1.2     2018-03-15 [1]
  workflowr                1.4.0     2019-06-08 [1]
  xfun                     0.9       2019-08-21 [1]
@@ -1093,8 +1395,6 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    
- CRAN (R 3.6.0)                    
- CRAN (R 3.6.0)                    
  Bioconductor                      
  CRAN (R 3.6.0)                    
  Bioconductor                      
@@ -1107,6 +1407,7 @@ ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
  CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    
  Bioconductor                      
+ CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    
  CRAN (R 3.6.0)                    

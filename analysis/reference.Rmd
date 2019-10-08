@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 Load required packages:
 
 ```{r pacman}
-pacman::p_load(batchelor, ggalluvial, here, pheatmap, readr, scater, scran, scmap, viridis)
+pacman::p_load(batchelor, ggalluvial, here, readr, scater, scran, scmap)
 ```
 
 Read experiment data:
@@ -38,17 +38,7 @@ sce <- read_rds(here("data/trajectory.Rds"))
 Select samples from genotype Het:
 
 ```{r}
-sce <- sce[, sce$genotype == "Het"]
-```
-
-Import colour palette for cell types:
-
-```{r}
-pal <- read_csv(here("palette.csv"))
-
-col <- pal$colour
-
-names(col) <- pal$celltype
+tmp <- sce[, sce$genotype == "Het"]
 ```
 
 ## Reference
@@ -65,6 +55,12 @@ Load the MouseGastrulationData package:
 
 ```{r}
 pacman::p_load(MouseGastrulationData)
+```
+
+Modify colour palette to include unassigned cells:
+
+```{r}
+EmbryoCelltypeColours <- c(EmbryoCelltypeColours, "unassigned" = "#999999", "unknown" = "#999999")
 ```
 
 ### Selection
@@ -111,7 +107,7 @@ plt <- plotPCA(ref, colour_by = "celltype")
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = "Cell type", values = col) +
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()
 ```
@@ -123,7 +119,7 @@ plt <- plotUMAP(ref, colour_by = "celltype")
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = "Cell type", values = col) +
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()
 ```
@@ -135,9 +131,9 @@ ggplot(plt$data, aes(X, Y, colour = colour_by)) +
 Create feature_symbol column required by scmap package:
 
 ```{r}
-rowData(sce)$feature_symbol <- uniquifyFeatureNames(rowData(sce)$gene_id, rowData(sce)$gene_name)
+rowData(tmp)$feature_symbol <- uniquifyFeatureNames(rowData(tmp)$gene_id, rowData(tmp)$gene_name)
 
-rownames(sce) <- rowData(sce)$feature_symbol
+rownames(tmp) <- rowData(tmp)$feature_symbol
 
 rowData(ref)$feature_symbol <- uniquifyFeatureNames(rowData(ref)$ENSEMBL, rowData(ref)$SYMBOL)
 
@@ -147,9 +143,9 @@ rownames(ref) <- rowData(ref)$feature_symbol
 Subset both datasets to common universe of genes:
 
 ```{r}
-ids <- intersect(rownames(sce), rownames(ref))
+ids <- intersect(rownames(tmp), rownames(ref))
 
-sce <- sce[ids, ]
+tmp <- tmp[ids, ]
 
 ref <- ref[ids, ]
 ```
@@ -166,30 +162,18 @@ Create a cluster index based on celltype:
 ref <- indexCluster(ref, cluster_col = "celltype")
 ```
 
-Inspect the cell type index:
-
-```{r}
-idx <- metadata(ref)$scmap_cluster_index
-
-mat <- as.matrix(idx)
-
-brk <- seq(0, max(mat), length.out = 101)
-
-pheatmap(mat, color = viridis(100), breaks = brk, scale = "row")
-```
-
 Project our dataset to the reference dataset:
 
 ```{r}
-fit <- scmapCluster(projection = sce, index_list = list(reference = metadata(ref)$scmap_cluster_index))
+fit <- scmapCluster(projection = tmp, index_list = list(reference = metadata(ref)$scmap_cluster_index))
 
-sce$scmap_cluster_labs <- fit$scmap_cluster_labs[, "reference"]
+tmp$scmap_cluster_labs <- fit$scmap_cluster_labs[, "reference"]
 ```
 
 Plot the assignment of projected cell types:
 
 ```{r}
-dat <- data.frame(cluster = sce$cluster, celltype = sce$scmap_cluster_labs)
+dat <- data.frame(cluster = tmp$cluster, celltype = tmp$scmap_cluster_labs)
 
 dat <- plyr::count(dat, vars = c("cluster", "celltype"))
 
@@ -198,20 +182,28 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = "stratum", label.strata = TRUE) +
   scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = "Cell type", values = col) +
+  scale_fill_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   theme_minimal()
 ```
 
 Inspect the UMAP coordinates coloured by projected cell type:
 
 ```{r}
-plt <- plotUMAP(sce, colour_by = "scmap_cluster_labs")
+plt <- plotUMAP(tmp, colour_by = "scmap_cluster_labs")
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = "Cell type", values = col) +
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()
+```
+
+Save projected cell types to unmodified experiment data:
+
+```{r}
+sce$scmapCluster_celltype <- NA
+
+sce$scmapCluster_celltype[sce$genotype == "Het"] <- tmp$scmap_cluster_labs
 ```
 
 ### By cell
@@ -227,19 +219,19 @@ ref <- indexCell(ref)
 Project our dataset to the reference dataset:
 
 ```{r}
-num <- round(sqrt(length(unique(ref$celltype))))
+num <- round(sqrt(ncol(ref)))
 
-fit <- scmapCell(projection = sce, index_list = list(reference = metadata(ref)$scmap_cell_index), w = num)
+fit <- scmapCell(projection = tmp, index_list = list(reference = metadata(ref)$scmap_cell_index), w = num)
 
 lab <- apply(fit$reference$cells, 2, function(x) names(which.max(table(ref$celltype[x]))))
 
-sce$scmap_cell_labs <- lab
+tmp$scmap_cell_labs <- lab
 ```
 
 Plot the assignment of projected cell types:
 
 ```{r}
-dat <- data.frame(cluster = sce$cluster, celltype = sce$scmap_cell_labs)
+dat <- data.frame(cluster = tmp$cluster, celltype = tmp$scmap_cell_labs)
 
 dat <- plyr::count(dat, vars = c("cluster", "celltype"))
 
@@ -248,20 +240,28 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = "stratum", label.strata = TRUE) +
   scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = "Cell type", values = col) +
+  scale_fill_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   theme_minimal()
 ```
 
 Inspect the UMAP coordinates coloured by projected cell type:
 
 ```{r}
-plt <- plotUMAP(sce, colour_by = "scmap_cell_labs")
+plt <- plotUMAP(tmp, colour_by = "scmap_cell_labs")
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = "Cell type", values = col) +
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()
+```
+
+Save projected cell types to unmodified experiment data:
+
+```{r}
+sce$scmapCell_celltype <- NA
+
+sce$scmapCell_celltype[sce$genotype == "Het"] <- tmp$scmap_cell_labs
 ```
 
 ## Neighbors
@@ -271,7 +271,7 @@ Clear spike-in information across batches:
 ```{r}
 ref <- clearSpikes(ref)
 
-sce <- clearSpikes(sce)
+tmp <- clearSpikes(tmp)
 ```
 
 Select genes with positive average biological components:
@@ -279,7 +279,7 @@ Select genes with positive average biological components:
 ```{r}
 mod <- model.matrix(~ pool + sample, data = colData(ref))
 
-dec <- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(sce))
+dec <- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(tmp, block = tmp$phase))
 
 hvg <- rownames(dec)[dec$bio > 0]
 ```
@@ -287,43 +287,41 @@ hvg <- rownames(dec)[dec$bio > 0]
 Correct for batch effects using a fast version of the MNN method:
 
 ```{r}
-mnn <- fastMNN(ref, sce, pc.input = TRUE, subset.row = hvg)
+mnn <- fastMNN(ref, tmp, pc.input = TRUE, subset.row = hvg)
 
 reducedDimNames(mnn) <- "MNN"
+
+mnn$batch <- ifelse(mnn$batch == 1, "Marioni", "Wilson")
 ```
 
-Add metadata to the combined dataset:
+Identify kNN from reference cells:
 
 ```{r}
-mnn$celltype <- c(ref$celltype, rep("unknown", ncol(sce)))
+sbj <- reducedDim(mnn, "MNN")[mnn$batch == "Marioni", ]
 
-mnn$pool <- c(ref$pool, rep("unknown", ncol(sce)))
+qry <- reducedDim(mnn, "MNN")[mnn$batch == "Wilson", ]
 
-mnn$sample <- c(ref$sample, rep("unknown", ncol(sce)))
-```
-
-Annotate experiment cells using kNN coordinates from reference cells:
-
-```{r}
-sbj <- reducedDim(mnn, "MNN")[mnn$batch == 1, ]
-
-qry <- reducedDim(mnn, "MNN")[mnn$batch == 2, ]
-
-num <- round(sqrt(length(unique(ref$celltype))))
+num <- round(sqrt(ncol(ref)))
 
 knn <- BiocNeighbors::queryKNN(sbj, qry, k = num)
+```
+
+Annotate cell type using kNN cells:
+
+```{r}
+mnn$celltype <- c(ref$celltype, rep(NA, ncol(tmp)))
 
 lab <- apply(knn$index, 1, function(x) names(which.max(table(ref$celltype[x]))))
 
-mnn$celltype[mnn$batch == 2] <- lab
+mnn$celltype[mnn$batch == "Wilson"] <- lab
 
-sce$mnn_cell_labs <- lab
+tmp$mnn_celltype <- lab
 ```
 
 Plot the assignment of projected cell types:
 
 ```{r}
-dat <- data.frame(cluster = sce$cluster, celltype = sce$mnn_cell_labs)
+dat <- data.frame(cluster = tmp$cluster, celltype = tmp$mnn_celltype)
 
 dat <- plyr::count(dat, vars = c("cluster", "celltype"))
 
@@ -332,18 +330,18 @@ ggplot(dat, aes(y = freq, axis1 = cluster, axis2 = celltype)) +
   geom_stratum() +
   geom_text(stat = "stratum", label.strata = TRUE) +
   scale_x_discrete(limits = c("Cluster", "Cell type"), expand = c(0.05, 0.05)) +
-  scale_fill_manual(name = "Cell type", values = col) +
+  scale_fill_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   theme_minimal()
 ```
 
 Plot UMAP of experiment data coloured by cell type annotation:
 
 ```{r}
-plt <- plotUMAP(sce, colour_by = "mnn_cell_labs")
+plt <- plotUMAP(tmp, colour_by = "mnn_celltype")
 
 ggplot(plt$data, aes(X, Y, colour = colour_by)) +
   geom_point(size = 1) +
-  scale_colour_manual(name = "Cell type", values = col) +
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
   theme_void()
 ```
@@ -361,22 +359,30 @@ Plot UMAP of combined dataset:
 ```{r, fig.height = 6, fig.width = 10}
 plt <- plotUMAP(mnn, colour_by = "celltype", shape_by = "batch")
 
-ggplot(subset(plt$data, shape_by == 1), aes(X, Y, colour = colour_by)) +
+ggplot(subset(plt$data, shape_by == "Marioni"), aes(X, Y, colour = colour_by)) +
   geom_point(alpha = 0.5, size = 0.5) +
-  scale_colour_manual(values = col) +
+  scale_colour_manual(values = EmbryoCelltypeColours) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
-  geom_point(data = subset(plt$data, shape_by == 2), aes(X, Y), colour = "black", shape = 4) +
+  geom_point(data = subset(plt$data, shape_by == "Wilson"), aes(X, Y), colour = "black", shape = 4) +
   theme_void()
+```
+
+Save projected celltype to unmodified experiment data:
+
+```{r}
+sce$fastMNN_celltype <- NA
+
+sce$fastMNN_celltype[sce$genotype == "Het"] <- tmp$mnn_celltype
 ```
 
 ## Summary
 
 ### Output
 
-Write combined dataset:
+Write experiment data:
 
 ```{r}
-write_rds(mnn, here("data/reference.Rds"))
+write_rds(sce, here("data/reference.Rds"))
 ```
 
 ### Session

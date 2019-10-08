@@ -260,7 +260,7 @@ cls <- hclust(dst, "ward.D2")
 
 mat <- as.matrix(dst)
 
-cut <- dynamicTreeCut::cutreeDynamic(cls, distM = mat)
+cut <- dynamicTreeCut::cutreeDynamic(cls, distM = mat) + 1
 
 sce$cluster_hclust <- factor(cut)
 ```
@@ -310,7 +310,7 @@ patchwork::wrap_plots(plt, ncol = 2)
 Choose clustering method for downstream analysis:
 
 ```{r}
-sce$cluster <- sce$cluster_louvain
+sce$cluster <- sce$cluster_kmeans
 ```
 
 ## Summary
