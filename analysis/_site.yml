@@ -35,6 +35,18 @@ navbar:
       href: reference.html
     - text: Interactive
       href: interactive.html
+    - text: 01-Analysis
+      href: 01-analysis.html
+    - text: 02-Analysis
+      href: 02-analysis.html
+    - text: 03-Analysis
+      href: 03-analysis.html
+    - text: 04-Analysis
+      href: 04-analysis.html
+    - text: 05-Analysis
+      href: 05-analysis.html
+    - text: 06-Analysis
+      href: 06-analysis.html
   right:
   - icon: fa-github
     text: Source code

@@ -1,0 +1,356 @@
+---
+title: "Analysis 2"
+author: "James Ashmore"
+date: "2019-10-23"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Setup
+
+Set knitr chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/02-analysis/",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+## Packages
+
+Load required analysis packages:
+
+```{r}
+pacman::p_load(batchelor, gam, here, readr, scater, scran, slingshot, RColorBrewer, pheatmap)
+```
+
+## Atlas
+
+Load the MouseGastrulationData package:
+
+```{r}
+pacman::p_load(MouseGastrulationData)
+```
+
+Modify colour palette to include unassigned and unknown cells:
+
+```{r}
+EmbryoCelltypeColours <- c(EmbryoCelltypeColours, unassigned = "#999999", unknown = "#999999")
+```
+
+Select samples from embryonic stage E8.25:
+
+```{r}
+sel <- subset(AtlasSampleMetadata, stage == "E8.25")
+```
+
+Obtain processed counts from the dataset:
+
+```{r}
+ref <- EmbryoAtlasData(type = "processed", samples = sel$sample)
+```
+
+Select cell types from the dataset:
+
+```{r}
+sel <- c("Mixed mesoderm", "Cardiomyocytes", "Allantois", "ExE mesoderm", "Mesenchyme", "Haematoendothelial progenitors", "Endothelium")
+```
+
+Filter processed counts for select cell types:
+
+```{r}
+ref <- ref[, ref$celltype %in% sel]
+```
+
+Remove cells with no defined cell type:
+
+```{r}
+nan <- is.na(ref$celltype)
+ref <- ref[, !nan]
+```
+
+Compute log-transformed normalized expression values:
+
+```{r}
+ref <- logNormCounts(ref)
+```
+
+Change dimension names to those required by the scater package:
+
+```{r}
+reducedDimNames(ref) <- c("PCA", "UMAP")
+```
+
+Plot UMAP showing all the selected cells: 
+
+```{r}
+plt <- plotUMAP(ref, colour_by = "celltype")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(colour = colour_by)) + 
+  scale_colour_manual(name = "Cell type", values = EmbryoCelltypeColours) +
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+## Allantois
+
+Load the Allantois dataset:
+
+```{r}
+sce <- read_rds(here("data/annotation.Rds"))
+```
+
+## Neighbors
+
+Clear spike-in information across batches:
+
+```{r}
+ref <- clearSpikes(ref)
+
+sce <- clearSpikes(sce)
+```
+
+Filter batches to contain same genes:
+
+```{r}
+rownames(ref) <- rowData(ref)$ENSEMBL
+
+rownames(sce) <- rowData(sce)$gene_id
+
+ids <- intersect(rownames(ref), rownames(sce))
+
+ref <- ref[ids, ]
+
+sce <- sce[ids, ]
+```
+
+Select genes with positive average biological components:
+
+```{r}
+mod <- model.matrix(~ pool + sample, data = colData(ref))
+
+dec <- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(sce, block = sce$phase))
+
+hvg <- rownames(dec)[dec$bio > 0]
+```
+
+Correct for batch effects using a fast version of the MNN method:
+
+```{r}
+mnn <- fastMNN(ref, sce, pc.input = TRUE, subset.row = hvg)
+
+colnames(mnn) <- NULL
+
+reducedDimNames(mnn) <- "MNN"
+```
+
+Annotate merged dataset with batch, celltype, and genotype information:
+
+```{r}
+mnn$batch <- ifelse(mnn$batch == 1, "Marioni", "Wilson")
+
+mnn$celltype <- c(ref$celltype, sce$cellassign_celltype)
+
+mnn$genotype <- c(rep("Het", ncol(ref)), sce$genotype)
+```
+
+Identify kNN from reference cells:
+
+```{r}
+sbj <- reducedDim(mnn, "MNN")[mnn$batch == "Marioni", ]
+
+qry <- reducedDim(mnn, "MNN")[mnn$batch == "Wilson", ]
+
+num <- round(sqrt(ncol(ref)))
+
+knn <- BiocNeighbors::queryKNN(sbj, qry, k = num)
+```
+
+Annotate cell type using kNN cells:
+
+```{r}
+nan <- rep(NA, ncol(sce))
+
+mnn$neighbor <- c(ref$celltype, nan)
+
+lab <- apply(knn$index, 1, function(x) names(which.max(table(ref$celltype[x]))))
+
+mnn$neighbor[mnn$batch == "Wilson"] <- lab
+```
+
+Perform UMAP on the PCA data from the combined dataset:
+
+```{r}
+set.seed(1701)
+
+mnn <- runUMAP(mnn, n_neighbors = 50, dimred = "MNN")
+```
+
+Plot UMAP showing batch annotation:
+
+```{r}
+plt <- plotUMAP(mnn, colour_by = "batch")
+
+col <- c("Marioni" = "#d9d9d9", "Wilson" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(colour = colour_by)) + 
+  scale_colour_manual(name = "Batch", values = col) +
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Plot UMAP showing genotype annotation:
+
+```{r}
+plt <- plotUMAP(mnn, colour_by = "genotype")
+
+col <- c("Het" = "#D9D9D9", "Hom" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(colour = colour_by)) +
+  scale_colour_manual(name = "Genotype", values = col) + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Plot UMAP showing batch + genotype annotation:
+
+```{r}
+plt <- plotUMAP(mnn)
+
+plt$data$colour_by <- paste0(mnn$batch, "-", mnn$genotype)
+
+col <- c("Marioni-Het" = "#D9D9D9", "Wilson-Het" = "#fb8072", "Wilson-Hom" = "#80b1d3")
+
+lab <- c("Marioni-Het" = "Het (Marioni)", "Wilson-Het" = "Het (Wilson)", "Wilson-Hom" = "Hom (Wilson)")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(colour = colour_by)) +
+  scale_colour_manual(name = "Genotype", values = col, labels = lab) + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Plot UMAP showing celltype annotation:
+
+```{r}
+plt <- plotUMAP(mnn)
+
+plt$data$fill_by <- mnn$celltype
+
+plt$data$colour_by <- mnn$batch
+
+col <- c(
+  "Allantois" = "#4cb08d",
+  "Blood" = "#c04fb4",
+  "Cardiac" = "#67b54e",
+  "Cardiomyocytes" = "#7b62d0",
+  "Endothelial" = "#bcaf46",
+  "Endothelium" = "#6479c3",
+  "ExE mesoderm" = "#ce5137",
+  "Extraembryonic ectoderm" = "#54acd8",
+  "Extraembryonic mesoderm" = "#d34379",
+  "Gut" = "#667934",
+  "Haematoendothelial progenitors" = "#c07ebe",
+  "Mesenchyme" = "#c38041",
+  "Mesothelium" = "#bd606e"
+)
+
+pch <- c("Marioni" = "transparent", "Wilson" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(fill = fill_by, colour = colour_by), shape = 21) + 
+  scale_fill_manual(name = "Cell type", values = col) + 
+  scale_colour_manual(name = "Batch", values = pch, limits = "Wilson") + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Plot UMAP showing neighbour and batch annotation:
+
+```{r}
+plt <- plotUMAP(mnn)
+
+plt$data$fill_by <- mnn$neighbor
+
+plt$data$colour_by <- mnn$batch
+
+col <- c(
+  "Allantois" = "#4cb08d",
+  "Blood" = "#c04fb4",
+  "Cardiac" = "#67b54e",
+  "Cardiomyocytes" = "#7b62d0",
+  "Endothelial" = "#bcaf46",
+  "Endothelium" = "#6479c3",
+  "ExE mesoderm" = "#ce5137",
+  "Extraembryonic ectoderm" = "#54acd8",
+  "Extraembryonic mesoderm" = "#d34379",
+  "Gut" = "#667934",
+  "Haematoendothelial progenitors" = "#c07ebe",
+  "Mesenchyme" = "#c38041",
+  "Mesothelium" = "#bd606e"
+)
+
+pch <- c("Marioni" = "transparent", "Wilson" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) +
+  geom_point(aes(fill = fill_by, colour = colour_by), shape = 21) + 
+  scale_fill_manual(name = "Neighbor", values = col) + 
+  scale_colour_manual(name = "Batch", values = pch, limits = "Wilson") + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Plot UMAP showing neighbour, batch, and genotype annotation:
+
+```{r, fig.width = 10, fig.height = 6}
+plt <- plotUMAP(mnn)
+
+plt$data$fill_by <- mnn$neighbor
+
+plt$data$colour_by <- mnn$batch
+
+plt$data$facet_by <- mnn$genotype
+
+col <- c(
+  "Allantois" = "#4cb08d",
+  "Blood" = "#c04fb4",
+  "Cardiac" = "#67b54e",
+  "Cardiomyocytes" = "#7b62d0",
+  "Endothelial" = "#bcaf46",
+  "Endothelium" = "#6479c3",
+  "ExE mesoderm" = "#ce5137",
+  "Extraembryonic ectoderm" = "#54acd8",
+  "Extraembryonic mesoderm" = "#d34379",
+  "Gut" = "#667934",
+  "Haematoendothelial progenitors" = "#c07ebe",
+  "Mesenchyme" = "#c38041",
+  "Mesothelium" = "#bd606e"
+)
+
+pch <- c("Marioni" = "transparent", "Wilson" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) + 
+  geom_point(data = plt$data[, 1:4], mapping = aes(X, Y), colour = "grey") + 
+  geom_point(aes(fill = fill_by, colour = colour_by), shape = 21) + 
+  facet_wrap(~ facet_by, scales = "fixed") + 
+  scale_fill_manual(name = "Neighbor", values = col) + 
+  scale_colour_manual(name = "Batch", values = pch, limits = "Wilson") + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+Save merged dataset for further exploration:
+
+```{r}
+write_rds(mnn, here("data/02-analysis.rds"))
+```

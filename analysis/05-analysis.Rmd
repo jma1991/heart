@@ -1,0 +1,195 @@
+---
+title: "Analysis 5"
+author: "James Ashmore"
+date: "2019-10-23"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Setup
+
+Set knitr chunk options:
+
+```{r knitr}
+knitr::opts_chunk$set(
+  autodep    = TRUE,
+  cache      = TRUE,
+  cache.path = "cache/05-analysis/",
+  dev        = "png",
+  error      = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+## Packages
+
+Load required analysis packages:
+
+```{r}
+pacman::p_load(batchelor, gam, here, readr, scater, scran, slingshot, RColorBrewer, pheatmap, igraph, EnsDb.Mmusculus.v79)
+```
+
+## Import
+
+Load the merged dataset:
+
+```{r}
+mnn <- read_rds(here("data/04-analysis.rds"))
+```
+
+Annotate gene identifiers:
+
+```{r}
+rowData(mnn)$ENSEMBL <- rownames(mnn)
+
+rowData(mnn)$SYMBOL <- mapIds(EnsDb.Mmusculus.v79, keys = rownames(mnn), column = "SYMBOL", keytype = "GENEID")
+
+rownames(mnn) <- uniquifyFeatureNames(rowData(mnn)$ENSEMBL, rowData(mnn)$SYMBOL)
+```
+
+Plot UMAP showing neighbour, batch, and genotype annotation:
+
+```{r, fig.width = 10, fig.height = 6}
+plt <- plotUMAP(mnn)
+
+plt$data$fill_by <- mnn$neighbor
+
+plt$data$colour_by <- mnn$batch
+
+plt$data$facet_by <- mnn$genotype
+
+col <- c(
+  "Allantois" = "#4cb08d",
+  "Blood" = "#c04fb4",
+  "Cardiac" = "#67b54e",
+  "Cardiomyocytes" = "#7b62d0",
+  "Endothelial" = "#bcaf46",
+  "Endothelium" = "#6479c3",
+  "ExE mesoderm" = "#ce5137",
+  "Extraembryonic ectoderm" = "#54acd8",
+  "Extraembryonic mesoderm" = "#d34379",
+  "Gut" = "#667934",
+  "Haematoendothelial progenitors" = "#c07ebe",
+  "Mesenchyme" = "#c38041",
+  "Mesothelium" = "#bd606e"
+)
+
+pch <- c("Marioni" = "transparent", "Wilson" = "#000000")
+
+ggplot(plt$data, aes(X, Y)) + 
+  geom_point(data = plt$data[, 1:4], mapping = aes(X, Y), colour = "grey") + 
+  geom_point(aes(fill = fill_by, colour = colour_by), shape = 21) + 
+  facet_wrap(~ facet_by, scales = "fixed") + 
+  scale_fill_manual(name = "Neighbor", values = col) + 
+  scale_colour_manual(name = "Batch", values = pch, limits = "Wilson") + 
+  theme_void() +
+  theme(aspect.ratio = 1)
+```
+
+## Sub-clustering
+
+```{r}
+sclust <- function(obj) {
+  
+  ref <- mnn[, mnn$batch == "Marioni"]
+  
+  sce <- mnn[, mnn$batch == "Wilson"]
+  
+  mod <- model.matrix(~ pool + sample, data = colData(ref))
+  
+  dec <- combineVar(modelGeneVar(ref, design = mod), modelGeneVar(sce, block = sce$phase))
+  
+  hvg <- rownames(dec)[dec$bio > 0]
+  
+  snn <- buildSNNGraph(obj, assay.type = "reconstructed", use.dimred = "MNN", subset.row = hvg)
+  
+  cls <- igraph::cluster_walktrap(snn)$membership
+  
+  obj$cluster_walktrap <- factor(cls)
+  
+  return(obj)
+  
+}
+```
+
+```{r}
+tbl <- table(mnn$neighbor)
+
+lvl <- names(tbl)
+
+lvl <- lvl[tbl > 1]
+```
+
+```{r}
+mnn <- lapply(lvl, function(x) {
+  
+  obj <- mnn[, mnn$neighbor == x]
+  
+  obj <- sclust(obj)
+  
+  obj
+
+})
+
+names(mnn) <- lvl
+```
+
+```{r}
+sig <- lapply(mnn, function(x) {
+  
+  m <- findMarkers(x, x$cluster_walktrap, block = x$batch, assay.type = "logcounts")
+  
+  m <- lapply(m, subset, FDR < 0.1)
+  
+  m <- lapply(m, head, n = 25)
+  
+  m <- lapply(m, rownames)
+  
+  m <- unique(sort(unlist(m)))
+
+})
+
+sig <- Filter(length, sig)
+```
+
+### Dimension {.tabset}
+
+Create dimensionality reduction plots coloured by the top 5 marker genes:
+
+```{r, fig.height = 4, fig.width = 6, results = "asis"}
+for (n in names(sig)) {
+  
+  obj <- mnn[[n]]
+  
+  plt <- plotUMAP(obj, colour_by = "cluster_walktrap", shape_by = "genotype")
+  
+  cat("#### ", n, "\n")
+
+  print(plt)
+
+  cat("\n\n")
+
+}
+```
+
+### Heatmap {.tabset}
+
+Create a heatmap of expression values for the top 5 marker genes:
+
+```{r, fig.height = 8, fig.width = 10, results = "asis"}
+for (n in names(sig)) {
+
+  obj <- mnn[[n]]
+  
+  ids <- sig[[n]]
+
+  cat("#### ", n, "\n")
+
+  plotHeatmap(obj, ids, exprs_values = "reconstructed", center = TRUE, symmetric = TRUE, colour_columns_by = c("batch", "genotype"), order_columns_by = "cluster_walktrap", show_colnames = FALSE, cluster_rows = ifelse(length(ids) >= 2, TRUE, FALSE))
+
+  cat("\n\n")
+
+}
+```
