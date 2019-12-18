@@ -193,3 +193,11 @@ for (n in names(sig)) {
 
 }
 ```
+
+## Summary
+
+### Output
+
+```{r}
+saveRDS(mnn, file = here("data/05-analysis.rds"))
+```

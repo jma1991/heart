@@ -189,7 +189,7 @@ mnn$sample[mnn$batch == "Marioni"] <- ref$sample
 
 # Phase
 mnn$phase <- NA
-mnn$phase[mnn$batch == "Wilson"] <- sce$phase
+mnn$phase[mnn$batch == "Wilson"] <- as.character(sce$phase)
 ```
 
 Choose optimal K from reference cells:
